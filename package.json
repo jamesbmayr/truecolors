@@ -1,0 +1,19 @@
+{
+  "name": "truecolors",
+  "version": "1.0.0",
+  "description": "a multiplayer asymmetrical team card game",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"test\"",
+    "start": "node index.js",
+    "mongo": "mongod --dbpath=data/db --port 27017"
+  },
+  "author": "James Mayr",
+  "license": "ISC",
+  "engines": {
+    "node": "6.11.1"
+  },
+  "dependencies": {
+    "websocket": "^1.0.25"
+  }
+}
