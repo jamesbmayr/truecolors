@@ -226,7 +226,6 @@
 								team: null,
 								status: {
 									active: false,
-									turnOrder: null,
 									isTurn: false,
 									vote: null
 								},
@@ -251,12 +250,14 @@
 							return {
 								id: generateRandom(null, 4),
 								created: new Date().getTime(),
+								updated: new Date().getTime(),
 								status: {
-									play: false,
+									startTime: null,
+									endTime: null, 
 									round: 0,
 									phase: null,
+									roundLeader: null,
 									currentTurn: null,
-									turnOrder: [],
 									trueColors: getAsset("trueColors"),
 									points: [],
 									message: "waiting for players...",
@@ -374,10 +375,12 @@
 						case "constants":
 							return {
 								cookieLength: 1000 * 60 * 60 * 24 * 7,
+								handSize: 3,
 								numberOfRounds: 5,
 								deckSize: 72,
 								cardColors: ["red", "yellow", "green", "blue", "white"],
 								cardDistribution: ["red", "yellow", "green", "blue", "white", "white"],
+								wildcardColors: ["white"],
 								teamDistribution: {
 									"4": {good: 3, evil: 1},
 									"5": {good: 4, evil: 1},
@@ -395,27 +398,28 @@
 					// game
 						case "trueColors":
 							var trueColors = []
-							var cardColors = getAsset("constants").cardColors
-							for (var i in cardColors) {
-								var card = getSchema("card")
-									card.color = cardColors[i]
-								trueColors.push(card)
+							var constants = getAsset("constants")
+							while (trueColors.length < constants.numberOfRounds) {
+								for (var i in constants.cardColors) {
+									var card = getSchema("card")
+										card.color = constants.cardColors[i]
+									trueColors.push(card)
+								}
 							}
-							return sortRandom(trueColors)
+							return trueColors
 						break
 
 						case "deck":
 							var deck = []
-							var deckSize = getAsset("constants").deckSize
-							var cardDistribution = getAsset("constants").cardDistribution
-							while (deck.length < deckSize) {
-								for (var i in cardDistribution) {
+							var constants = getAsset("constants")
+							while (deck.length < constants.deckSize) {
+								for (var i in constants.cardDistribution) {
 									var card = getSchema("card")
-										card.color = cardDistribution[i]
+										card.color = constants.cardDistribution[i]
 									deck.push(card)
 								}
 							}
-							return sortRandom(deck)
+							return deck
 						break
 
 					// other
