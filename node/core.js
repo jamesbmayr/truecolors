@@ -286,6 +286,9 @@
 			try {
 				switch (index) {
 					// web
+						case "title":
+							return "True Colors"
+						break
 						case "logo":
 							return `<link rel="shortcut icon" href="logo.png"/>`
 						break
@@ -375,6 +378,7 @@
 						case "constants":
 							return {
 								cookieLength: 1000 * 60 * 60 * 24 * 7,
+								delayTime: 1000 * 3,
 								handSize: 3,
 								numberOfRounds: 5,
 								deckSize: 72,

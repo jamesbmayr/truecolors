@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title>True Colors</title>
-		<link rel="favicon" href="#"/>
+		<title><script node>getAsset("title")</script>node></title>
+		<script node>getAsset("logo")</script>node>
+		<script node>getAsset("meta")</script>node>
+		<script node>getAsset("fonts")</script>node>
+		<script node>getAsset("css-variables")</script>node>
 		<link rel="stylesheet" href="main.css"/>
 		<link rel="stylesheet" href="game.css"/>
-		<script src="main.js"></script>
 		<script src="game.js"></script>
 	</head>
 	<body>
-		<pre id="data"></pre>
 		<div id="game-table">
 			<form id="game-table-start-form" action="javascript:;" method="post">
-				<button id="game-table-start-button">start game</button>
+				<button id="game-table-start-button">start game <script node>REQUEST.path[REQUEST.path.length - 1].toUpperCase()</script>node></button>
 			</form>
 			<div id="game-table-center">
 				<div id="game-table-center-draw"></div>

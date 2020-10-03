@@ -1,0 +1,94 @@
+/*** background ***/
+	#background {
+		position: absolute;
+		top: 0;
+		left: 0;
+		height: 120vh;
+		width: 120vw;
+		z-index: -1;
+		pointer-events: none;
+		filter: blur(5px);
+		overflow: hidden;
+	}
+
+	.background-card {
+		pointer-events: none;
+		float: left;
+		border-radius: var(--border-radius);
+		background-color: var(--dark-gray);
+		background-size: cover;
+		background-position: center;
+		background-repeat: no-repeat;
+		transition: 1s;
+	}
+
+	/* colors */
+		.background-card.red {
+			background-image: url("assets/red.png");
+		}
+
+		.background-card.yellow {
+			background-image: url("assets/yellow.png");
+		}
+
+		.background-card.green {
+			background-image: url("assets/green.png");
+		}
+
+		.background-card.blue {
+			background-image: url("assets/blue.png");
+		}
+
+		.background-card.white {
+			background-image: url("assets/white.png");
+		}
+
+/*** container ***/
+	#container {
+		position: absolute;
+		height: auto;
+		width: 410px;
+		top: 50%;
+		left: 50%;
+		transform: translateX(-50%) translateY(-50%);
+		padding: var(--medium-gap-size);
+		border-radius: var(--border-radius);
+		background-color: rgba(255,255,255,0.5);
+		box-shadow: 0 0 var(--shadow-size) var(--medium-gray);
+	}
+
+	/* forms */
+		#player-name-input {
+			height: calc(100px - 2 * (var(--small-gap-size) + var(--border-size)));
+			margin-bottom: var(--medium-gap-size);
+		}
+
+		#new-game-form, #join-game-form {
+			display: inline-block;
+			width: 50%;
+		}
+
+		#new-game-button {
+			float: left;
+			height: 200px;
+			width: 200px;
+			margin: 0;
+		}
+
+		#game-id-input {
+			float: right;
+			height: calc(100px - 2 * (var(--small-gap-size) + var(--border-size)));
+			width: calc(200px - 2 * (var(--small-gap-size) + var(--border-size)));
+			margin: 0;
+			border-bottom-left-radius: 0;
+			border-bottom-right-radius: 0;
+		}
+
+		#join-game-button {
+			float: right;
+			margin: 0;
+			height: 100px;
+			width: 200px;
+			border-top-left-radius: 0;
+			border-top-right-radius: 0;
+		}

@@ -266,7 +266,7 @@
 					var constants = CORE.getAsset("constants")
 					var minimumPlayers = Number(Object.keys(constants.teamDistribution).sort(function(a, b) {
 						return Number(a) - Number(b)
-					}))
+					})[0])
 					var playerIds = Object.keys(game.players)
 					if (playerIds.length < minimumPlayers) {
 						callback({success: false, message: "game requires at least " + minimumPlayers + " players", recipients: [REQUEST.session.id]})
@@ -387,52 +387,52 @@
 						}
 
 						// update this player
-							callback({success: true, message: null, game: sanitizeGame(game, thisPlayerId), recipients: [REQUEST.session.id]})
+							callback({success: true, message: "you voted! wait for other players...", game: sanitizeGame(game, thisPlayerId), recipients: [REQUEST.session.id]})
 
-						// consensus round leader?
+						// no consensus round leader?
 							var roundLeaderId = determineRoundLeader(game)
 							if (!roundLeaderId) {
 								return
 							}
 
-						// start swap phase
-							// clear votes
-								for (var i in game.players) {
-									game.players[i].status.vote = null
+						// clear votes
+							for (var i in game.players) {
+								game.players[i].status.vote = null
+							}
+
+						// set turn order
+							game.players[roundLeaderId].status.isTurn = true
+							game.status.roundLeader = roundLeaderId
+							game.status.currentTurn = roundLeaderId
+
+							game.status.phase = "swap"
+							game.status.message = game.players[game.status.roundLeader].name + " leads the round of swaps"
+							game.updated = new Date().getTime()
+
+						// query
+							var query = CORE.getSchema("query")
+								query.collection = "games"
+								query.command = "update"
+								query.filters = {id: game.id}
+								query.document = game
+
+						// update
+							CORE.accessDatabase(query, function(results) {
+								if (!results.success) {
+									callback(results)
+									return
 								}
 
-							// set turn order
-								game.players[roundLeaderId].status.isTurn = true
-								game.status.roundLeader = roundLeaderId
-								game.status.currentTurn = roundLeaderId
-
-								game.status.phase = "swap"
-								game.status.message = game.players[game.status.roundLeader].name + " leads the round of swaps"
-								game.updated = new Date().getTime()
-
-							// query
-								var query = CORE.getSchema("query")
-									query.collection = "games"
-									query.command = "update"
-									query.filters = {id: game.id}
-									query.document = game
-
-							// update
-								CORE.accessDatabase(query, function(results) {
-									if (!results.success) {
-										callback(results)
-										return
-									}
-
-									// all players
+								// update players
+									forceDelay(function() {
 										for (var i in game.players) {
 											callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
 										}
 
-									// round leader starts
-										callback({success: true, message: "your turn! select one of your cards", recipients: [game.players[roundLeaderId].sessionId]})
-										return
-								})
+										// round leader starts
+											callback({success: true, message: "your turn! select one of your cards", recipients: [game.players[roundLeaderId].sessionId]})
+									}, CORE.getAsset("constants").delayTime)
+							})
 					})
 			}
 			catch (error) {
@@ -468,74 +468,22 @@
 						return game.players[p].sessionId == REQUEST.session.id
 					})
 
-				// phase
-					// swap
-						if (game.status.phase == "swap") {
-							// not your turn
-								if (game.status.currentTurn !== thisPlayerId) {
-									callback({success: false, message: "not your turn", recipients: [REQUEST.session.id]})
-									return
-								}
+				// swap phase
+					if (game.status.phase == "swap") {
+						// not your turn
+							if (game.status.currentTurn !== thisPlayerId) {
+								callback({success: false, message: "not your turn", recipients: [REQUEST.session.id]})
+								return
+							}
 
-							// selecting own card?
-								var card = game.players[thisPlayerId].cards.find(function(c) { return c.id == REQUEST.post.selectedCardId }) || null
-								if (card) {
-									// select only this card for swap
-										for (var c in game.players[thisPlayerId].cards) {
-											c.status.selectedForSwap = false
-										}
-										card.status.selectedForSwap = true
-
-									// update game
-										game.updated = new Date().getTime()
-
-									// query
-										var query = CORE.getSchema("query")
-											query.collection = "games"
-											query.command = "update"
-											query.filters = {id: game.id}
-											query.document = game
-
-									// update
-										CORE.accessDatabase(query, function(results) {
-											if (!results.success) {
-												callback(results)
-												return
-											}
-
-											callback({success: true, message: "card selected! select another player's card to swap with", game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
-											return
-										})
-
-									return
-								}
-
-							// selecting another player's card
-								var otherPlayerId = Object.keys(game.players).find(function(p) {
-									return p !== thisPlayerId && game.players[p].cards.find(function(c) {
-										return c.id == REQUEST.post.selectedCardId
-									})
-								})
-								if (!otherPlayerId) {
-									callback({success: false, message: "unable to locate card", recipients: [REQUEST.session.id]})
-									return
-								}
-
-								// haven't selected own card yet?
-									var ownCardForSwap = game.players[thisPlayerId].cards.find(function(c) { return c.status.selectedForSwap })
-									if (!ownCardForSwap) {
-										callback({success: false, message: "select one of your own cards first!", recipients: [REQUEST.session.id]})
-										return
+						// selecting own card?
+							var card = game.players[thisPlayerId].cards.find(function(c) { return c.id == REQUEST.post.selectedCardId }) || null
+							if (card) {
+								// select only this card for swap
+									for (var c in game.players[thisPlayerId].cards) {
+										c.status.selectedForSwap = false
 									}
-
-								// unselect cards
-									ownCardForSwap.status.selectedForSwap = false
-									game.players[otherPlayerId].cards[REQUEST.post.selectedCardId].status.selectedForSwap = false
-
-								// move cards
-									var ownCardForSwapId = ownCardForSwap.id
-									game = moveCard(game, {cardId: REQUEST.post.selectedCardId, fromId: otherPlayerId, toId: thisPlayerId})
-									game = moveCard(game, {cardId: ownCardForSwapId, fromId: thisPlayerId, toId: otherPlayerId})
+									card.status.selectedForSwap = true
 
 								// update game
 									game.updated = new Date().getTime()
@@ -554,18 +502,335 @@
 											return
 										}
 
-										callback({success: true, message: "cards swapped!", game: sanitizeGame(game, thisPlayerId), recipients: [game.players[thisPlayerId].sessionId]})
+										callback({success: true, message: "card selected! select another player's card to swap with", game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+									})
+								return
+							}
 
-										// ??? PAUSE ???
+						// selecting another player's card
+							var otherPlayerId = Object.keys(game.players).find(function(p) {
+								return p !== thisPlayerId && game.players[p].cards.find(function(c) {
+									return c.id == REQUEST.post.selectedCardId
+								})
+							})
 
-										// next player?
-											var nextPlayerId = getNextPlayerId(game, thisPlayerId)
-											if (nextPlayerId) {
-												// update turn
-													game.players[thisPlayerId].status.isTurn = false
-													game.players[nextPlayerId].status.isTurn = true
-													game.status.currentTurn = nextPlayerId
-													game.updated = new Date().getTime()
+						// can't find card
+							if (!otherPlayerId) {
+								callback({success: false, message: "unable to locate card", recipients: [REQUEST.session.id]})
+								return
+							}
+
+						// haven't selected own card yet?
+							var ownCardForSwap = game.players[thisPlayerId].cards.find(function(c) { return c.status.selectedForSwap })
+							if (!ownCardForSwap) {
+								callback({success: false, message: "select one of your own cards first!", recipients: [REQUEST.session.id]})
+								return
+							}
+
+						// unselect cards
+							ownCardForSwap.status.selectedForSwap = false
+							game.players[otherPlayerId].cards[REQUEST.post.selectedCardId].status.selectedForSwap = false
+
+						// move cards
+							var ownCardForSwapId = ownCardForSwap.id
+							game = moveCard(game, {cardId: REQUEST.post.selectedCardId, fromId: otherPlayerId, toId: thisPlayerId})
+							game = moveCard(game, {cardId: ownCardForSwapId, fromId: thisPlayerId, toId: otherPlayerId})
+
+						// update game
+							game.updated = new Date().getTime()
+
+						// query
+							var query = CORE.getSchema("query")
+								query.collection = "games"
+								query.command = "update"
+								query.filters = {id: game.id}
+								query.document = game
+
+						// update
+							CORE.accessDatabase(query, function(results) {
+								if (!results.success) {
+									callback(results)
+									return
+								}
+
+								// update this player
+									callback({success: true, message: "cards swapped!", game: sanitizeGame(game, thisPlayerId), recipients: [game.players[thisPlayerId].sessionId]})
+
+								// next player?
+									var nextPlayerId = getNextPlayerId(game, thisPlayerId)
+									if (nextPlayerId) {
+										// update turn
+											game.players[thisPlayerId].status.isTurn = false
+											game.players[nextPlayerId].status.isTurn = true
+											game.status.currentTurn = nextPlayerId
+											game.updated = new Date().getTime()
+
+										// query
+											var query = CORE.getSchema("query")
+												query.collection = "games"
+												query.command = "update"
+												query.filters = {id: game.id}
+												query.document = game
+
+										// update
+											CORE.accessDatabase(query, function(results) {
+												if (!results.success) {
+													callback(results)
+													return
+												}
+
+												// update players
+													forceDelay(function() {
+														callback({success: true, message: "wait for all players...", recipients: [game.players[thisPlayerId].sessionId]})
+														callback({success: true, message: "your turn! select one of your cards", recipients: [game.players[nextPlayerId].sessionId]})
+													}, CORE.getAsset("constants").delayTime)
+											})
+										return
+									}
+
+								// no next player --> toss phase
+									game.players[thisPlayerId].status.isTurn = false
+									game.status.roundLeader = null
+									game.status.currentTurn = null
+
+									game.status.phase = "toss"
+									game.status.message = "select one of your cards to discard"
+									game.updated = new Date().getTime()
+
+								// query
+									var query = CORE.getSchema("query")
+										query.collection = "games"
+										query.command = "update"
+										query.filters = {id: game.id}
+										query.document = game
+
+								// update
+									CORE.accessDatabase(query, function(results) {
+										if (!results.success) {
+											callback(results)
+											return
+										}
+
+										// update players
+											forceDelay(function() {
+												for (var i in game.players) {
+													callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+												}
+											}, CORE.getAsset("constants").delayTime)
+									})
+							})
+						return
+					}
+			
+				// toss phase
+					if (game.status.phase == "toss") {
+						// find card
+							var card = game.players[thisPlayerId].cards.find(function(c) { return c.id == REQUEST.post.selectedCardId }) || null
+							if (!card) {
+								callback({success: false, message: "invalid card selection", recipients: [REQUEST.session.id]})
+								return
+							}
+
+						// select only this card for discard
+							for (var c in game.players[thisPlayerId].cards) {
+								c.status.selectedForDiscard = false
+							}
+							card.status.selectedForDiscard = true
+
+						// update game
+							game.updated = new Date().getTime()
+
+						// query
+							var query = CORE.getSchema("query")
+								query.collection = "games"
+								query.command = "update"
+								query.filters = {id: game.id}
+								query.document = game
+
+						// update
+							CORE.accessDatabase(query, function(results) {
+								if (!results.success) {
+									callback(results)
+									return
+								}
+
+								// update player
+									callback({success: true, message: "card selected! wait for all players", game: sanitizeGame(game, thisPlayerId), recipients: [game.players[thisPlayerId].sessionId]})
+								
+								// still waiting on someone?
+									for (var i in game.players) {
+										if (!game.players[i].cards.find(function(c) { return c.status.selectedForDiscard })) {
+											return
+										}
+									}
+
+								// all selected --> discard
+									for (var i in game.players) {
+										var selectedCard = game.players[i].cards.find(function(c) { return c.status.selectedForDiscard })
+											selectedCard.status.selectedForDiscard = false
+										game = moveCard(game, {cardId: selectedCard.id, fromId: i, toId: "discard"})
+									}
+
+								// play phase
+									game.status.phase = "play"
+									game.status.message = "select one of your cards to play"
+									game.updated = new Date().getTime()
+
+								// query
+									var query = CORE.getSchema("query")
+										query.collection = "games"
+										query.command = "update"
+										query.filters = {id: game.id}
+										query.document = game
+
+								// update
+									CORE.accessDatabase(query, function(results) {
+										if (!results.success) {
+											callback(results)
+											return
+										}
+
+										// update all players
+											forceDelay(function() {
+												for (var i in game.players) {
+													callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+												}
+											}, CORE.getAsset("constants").delayTime)
+									})
+							})
+						return
+					}
+
+				// play phase
+					if (game.status.phase == "play") {
+						// find card
+							var card = game.players[thisPlayerId].cards.find(function(c) { return c.id == REQUEST.post.selectedCardId }) || null
+							if (!card) {
+								callback({success: false, message: "invalid card selection", recipients: [REQUEST.session.id]})
+								return
+							}
+
+						// select only this card for play
+							for (var c in game.players[thisPlayerId].cards) {
+								c.status.selectedForPlay = false
+							}
+							card.status.selectedForPlay = true
+
+						// update game
+							game.updated = new Date().getTime()
+
+						// query
+							var query = CORE.getSchema("query")
+								query.collection = "games"
+								query.command = "update"
+								query.filters = {id: game.id}
+								query.document = game
+
+						// update
+							CORE.accessDatabase(query, function(results) {
+								if (!results.success) {
+									callback(results)
+									return
+								}
+
+								// update player
+									callback({success: true, message: "card selected! wait for all players", game: sanitizeGame(game, thisPlayerId), recipients: [game.players[thisPlayerId].sessionId]})
+								
+								// still waiting on someone?
+									for (var i in game.players) {
+										if (!game.players[i].cards.find(function(c) { return c.status.selectedForPlay })) {
+											return
+										}
+									}
+
+								// all selected --> show
+									for (var i in game.players) {
+										var selectedCard = game.players[i].cards.find(function(c) { return c.status.selectedForPlay })
+											selectedCard.status.selectedForPlay = false
+											selectedCard.status.faceup = true
+									}
+
+								// show phase
+									var roundPoint = determineRoundPoint(game)
+									game.status.phase = "show"
+									game.status.points.push(roundPoint)
+									game.status.message = "played cards revealed: " + roundPoint + " earns a point"
+									game.updated = new Date().getTime()
+
+								// query
+									var query = CORE.getSchema("query")
+										query.collection = "games"
+										query.command = "update"
+										query.filters = {id: game.id}
+										query.document = game
+
+								// update
+									CORE.accessDatabase(query, function(results) {
+										if (!results.success) {
+											callback(results)
+											return
+										}
+
+										// update players
+											forceDelay(function() {
+												for (var i in game.players) {
+													callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+												}
+
+												// game continues?
+													var winningTeam = determineGameWinner(game)
+													if (!winningTeam) {
+														// discard faceup cards
+															for (var i in game.players) {
+																var faceupCard = game.players[i].cards.find(function(c) { return c.status.faceup })
+																	faceupCard.status.faceup = false
+																game = moveCard(game, {cardId: faceupCard.id, fromId: i, toId: "discard"})
+															}
+
+														// draw 2 new cards
+															for (var i in game.players) {
+																for (var j = 0; j < 2; j++) {
+																	if (!game.draw.length) {
+																		game = shuffleDiscardIntoDraw(game)
+																	}
+
+																	game = moveCard(game, {cardId: game.draw[0].id, fromId: "draw", toId: i})
+																}
+															}
+
+														// vote phase
+															game.status.round++
+															game.status.phase = "vote"
+															game.status.message = "select a player to go first this round"
+															game.updated = new Date().getTime()
+
+														// query
+															var query = CORE.getSchema("query")
+																query.collection = "games"
+																query.command = "update"
+																query.filters = {id: game.id}
+																query.document = game
+
+														// update
+															CORE.accessDatabase(query, function(results) {
+																if (!results.success) {
+																	callback(results)
+																	return
+																}
+
+																// update players
+																	forceDelay(function() {
+																		for (var i in game.players) {
+																			callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+																		}
+																	}, CORE.getAsset("constants").delayTime)
+															})
+														return
+													}
+
+												// game over
+													game.status.message = winningTeam + " wins the game!"
+													game.status.endTime = game.updated = new Date().getTime()
 
 												// query
 													var query = CORE.getSchema("query")
@@ -581,290 +846,17 @@
 															return
 														}
 
-														callback({success: true, message: "wait for all players...", recipients: [game.players[thisPlayerId].sessionId]})
-														callback({success: true, message: "your turn! select one of your cards", recipients: [game.players[nextPlayerId].sessionId]})
-														return
-
-													})
-												return
-											}
-
-										// no next player --> toss phase
-											// reset turns
-												game.players[thisPlayerId].status.isTurn = false
-												game.status.roundLeader = null
-												game.status.currentTurn = null
-
-												game.status.phase = "toss"
-												game.status.message = "select one of your cards to discard"
-												game.updated = new Date().getTime()
-
-											// query
-												var query = CORE.getSchema("query")
-													query.collection = "games"
-													query.command = "update"
-													query.filters = {id: game.id}
-													query.document = game
-
-											// update
-												CORE.accessDatabase(query, function(results) {
-													if (!results.success) {
-														callback(results)
-														return
-													}
-
-													// all players
-														for (var i in game.players) {
-															callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
-														}
-
-													return
-												})
-										return
-									})
-							return
-						}
-				
-					// toss
-						if (game.status.phase == "toss") {
-							// find card
-								var card = game.players[thisPlayerId].cards.find(function(c) { return c.id == REQUEST.post.selectedCardId }) || null
-								if (!card) {
-									callback({success: false, message: "invalid card selection", recipients: [REQUEST.session.id]})
-									return
-								}
-
-							// select only this card for discard
-								for (var c in game.players[thisPlayerId].cards) {
-									c.status.selectedForDiscard = false
-								}
-								card.status.selectedForDiscard = true
-
-							// update game
-								game.updated = new Date().getTime()
-
-							// query
-								var query = CORE.getSchema("query")
-									query.collection = "games"
-									query.command = "update"
-									query.filters = {id: game.id}
-									query.document = game
-
-							// update
-								CORE.accessDatabase(query, function(results) {
-									if (!results.success) {
-										callback(results)
-										return
-									}
-
-									callback({success: true, message: "card selected! wait for all players", game: sanitizeGame(game, thisPlayerId), recipients: [game.players[thisPlayerId].sessionId]})
-
-									// ??? PAUSE ???
-									
-									// still waiting on someone?
-										for (var i in game.players) {
-											if (!game.players[i].cards.find(function(c) { return c.status.selectedForDiscard })) {
-												return
-											}
-										}
-
-									// all selected --> discard
-										for (var i in game.players) {
-											var selectedCard = game.players[i].cards.find(function(c) { return c.status.selectedForDiscard })
-												selectedCard.status.selectedForDiscard = false
-											game = moveCard(game, {cardId: selectedCard.id, fromId: i, toId: "discard"})
-										}
-
-									// play phase
-										game.status.phase = "play"
-										game.status.message = "select one of your cards to play"
-										game.updated = new Date().getTime()
-
-									// query
-										var query = CORE.getSchema("query")
-											query.collection = "games"
-											query.command = "update"
-											query.filters = {id: game.id}
-											query.document = game
-
-									// update
-										CORE.accessDatabase(query, function(results) {
-											if (!results.success) {
-												callback(results)
-												return
-											}
-
-											// all players
-												for (var i in game.players) {
-													callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
-												}
-
-											return
-										})
-									return
-								})
-							return
-						}
-
-					// play
-						if (game.status.phase == "play") {
-							// find card
-								var card = game.players[thisPlayerId].cards.find(function(c) { return c.id == REQUEST.post.selectedCardId }) || null
-								if (!card) {
-									callback({success: false, message: "invalid card selection", recipients: [REQUEST.session.id]})
-									return
-								}
-
-							// select only this card for play
-								for (var c in game.players[thisPlayerId].cards) {
-									c.status.selectedForPlay = false
-								}
-								card.status.selectedForPlay = true
-
-							// update game
-								game.updated = new Date().getTime()
-
-							// query
-								var query = CORE.getSchema("query")
-									query.collection = "games"
-									query.command = "update"
-									query.filters = {id: game.id}
-									query.document = game
-
-							// update
-								CORE.accessDatabase(query, function(results) {
-									if (!results.success) {
-										callback(results)
-										return
-									}
-
-									callback({success: true, message: "card selected! wait for all players", game: sanitizeGame(game, thisPlayerId), recipients: [game.players[thisPlayerId].sessionId]})
-
-									// ??? PAUSE ???
-									
-									// still waiting on someone?
-										for (var i in game.players) {
-											if (!game.players[i].cards.find(function(c) { return c.status.selectedForPlay })) {
-												return
-											}
-										}
-
-									// all selected --> show
-										for (var i in game.players) {
-											var selectedCard = game.players[i].cards.find(function(c) { return c.status.selectedForPlay })
-												selectedCard.status.selectedForPlay = false
-												selectedCard.status.faceup = true
-										}
-
-									// show phase
-										var roundPoint = determineRoundPoint(game)
-										game.status.phase = "show"
-										game.status.points.push(roundPoint)
-										game.status.message = "played cards revealed: " + roundPoint + " earns a point"
-										game.updated = new Date().getTime()
-
-									// query
-										var query = CORE.getSchema("query")
-											query.collection = "games"
-											query.command = "update"
-											query.filters = {id: game.id}
-											query.document = game
-
-									// update
-										CORE.accessDatabase(query, function(results) {
-											if (!results.success) {
-												callback(results)
-												return
-											}
-
-											// all players
-												for (var i in game.players) {
-													callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
-												}
-
-											// ??? PAUSE ???
-
-											// game over?
-												var winningTeam = determineGameWinner(game)
-												if (winningTeam) {
-													game.status.message = winningTeam + " wins the game!"
-													game.status.endTime = game.updated = new Date().getTime()
-
-													// query
-														var query = CORE.getSchema("query")
-															query.collection = "games"
-															query.command = "update"
-															query.filters = {id: game.id}
-															query.document = game
-
-													// update
-														CORE.accessDatabase(query, function(results) {
-															if (!results.success) {
-																callback(results)
-																return
-															}
-
-															// all players
+														// update players
+															forceDelay(function() {
 																for (var i in game.players) {
 																	callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
 																}
-
-															return
-														})
-													return
-												}
-
-											// discard faceup cards
-												for (var i in game.players) {
-													var faceupCard = game.players[i].cards.find(function(c) { return c.status.faceup })
-														faceupCard.status.faceup = false
-													game = moveCard(game, {cardId: faceupCard.id, fromId: i, toId: "discard"})
-												}
-
-											// draw 2 new cards
-												for (var i in game.players) {
-													for (var j = 0; j < 2; j++) {
-														if (!game.draw.length) {
-															game = shuffleDiscardIntoDraw(game)
-														}
-
-														game = moveCard(game, {cardId: game.draw[0].id, fromId: "draw", toId: i})
-													}
-												}
-
-											// vote phase
-												game.status.round++
-												game.status.phase = "vote"
-												game.status.message = "select a player to go first this round"
-												game.updated = new Date().getTime()
-
-											// query
-												var query = CORE.getSchema("query")
-													query.collection = "games"
-													query.command = "update"
-													query.filters = {id: game.id}
-													query.document = game
-
-											// update
-												CORE.accessDatabase(query, function(results) {
-													if (!results.success) {
-														callback(results)
-														return
-													}
-
-													// all players
-														for (var i in game.players) {
-															callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
-														}
-
-													return
-												})
-											return
-										})
-									return
-								})
-							return
-						}
+															}, CORE.getAsset("constants").delayTime)
+													})
+											}, CORE.getAsset("constants").delayTime)
+									})
+							})
+					}
 			}
 			catch (error) {
 				CORE.logError(error)
@@ -873,6 +865,17 @@
 		}
 
 /*** tools ***/	
+	/* forceDelay */
+		module.exports.forceDelay = forceDelay
+		function forceDelay(callback, delay) {
+			try {
+				setTimeout(callback, delay)
+			}
+			catch (error) {
+				CORE.logError(error)
+			}
+		}
+
 	/* moveCard */
 		module.exports.moveCard = moveCard
 		function moveCard(game, data) {
@@ -893,7 +896,7 @@
 						if (data.fromId == "draw") {
 							var cardIndex = -1
 							for (var i in game.draw) {
-								if (game.draw[i].i == data.cardId) {
+								if (game.draw[i].id == data.cardId) {
 									cardIndex = i
 									break
 								}
@@ -902,7 +905,7 @@
 								CORE.logError("cannot find card " + data.cardId + " in draw")
 								return game
 							}
-							var cardClone = duplicateObject(game.draw[cardIndex])
+							var cardClone = CORE.duplicateObject(game.draw[cardIndex])
 							game.draw.splice(cardIndex, 1)
 						}
 
@@ -924,7 +927,7 @@
 								CORE.logError("cannot find card " + data.cardId + " on player " + data.fromId)
 								return game
 							}
-							var cardClone = duplicateObject(game.players[data.fromId].cards[cardIndex])
+							var cardClone = CORE.duplicateObject(game.players[data.fromId].cards[cardIndex])
 							game.players[data.fromId].cards.splice(cardIndex, 1)
 						}
 
@@ -949,7 +952,6 @@
 			}
 			catch (error) {
 				CORE.logError(error)
-				callback({success: false, message: "unable to " + arguments.callee.name})
 			}
 		}
 
@@ -981,7 +983,6 @@
 			}
 			catch (error) {
 				CORE.logError(error)
-				callback({success: false, message: "unable to " + arguments.callee.name})
 			}
 		}
 
@@ -1010,7 +1011,6 @@
 			}
 			catch (error) {
 				CORE.logError(error)
-				callback({success: false, message: "unable to " + arguments.callee.name})
 			}
 		}
 
@@ -1035,7 +1035,6 @@
 			}
 			catch (error) {
 				CORE.logError(error)
-				callback({success: false, message: "unable to " + arguments.callee.name})
 			}
 		}
 
@@ -1055,7 +1054,6 @@
 			}
 			catch (error) {
 				CORE.logError(error)
-				callback({success: false, message: "unable to " + arguments.callee.name})
 			}
 		}
 
@@ -1090,83 +1088,87 @@
 			}
 			catch (error) {
 				CORE.logError(error)
-				callback({success: false, message: "unable to " + arguments.callee.name})
 			}
 		}
 
 	/* sanitizeGame */
 		module.exports.sanitizeGame = sanitizeGame
 		function sanitizeGame(gameInput, playerId) {
-			// validate
-				if (!gameInput || !Object.keys(gameInput.players).length) {
-					return null
-				}
-
-			// create a copy
-				var game = CORE.duplicateObject(gameInput)
-
-			// round // hide trueColors for upcoming rounds
-				for (var i in game.status.trueColors) {
-					if (i > game.status.round - 1) {
-						game.status.trueColors[i] = null
+			try {
+				// validate
+					if (!gameInput || !Object.keys(gameInput.players).length) {
+						return null
 					}
-				}
 
-			// player status // hide everyone's status except your own
-				for (var i in game.players) {
-					delete game.players[i].sessionId
+				// create a copy
+					var game = CORE.duplicateObject(gameInput)
 
-					if (game.players[i].id !== playerId) {
-						game.players[i].status = null
+				// round // hide trueColors for upcoming rounds
+					for (var i in game.status.trueColors) {
+						if (i > game.status.round - 1) {
+							game.status.trueColors[i] = null
+						}
 					}
-					if (!playerId && !(game.players[playerId].team == "evil" && game.players[i].team == "evil")) {
-						game.players[i].team = null
-					}
-				}
 
-			// draw & discard // hide all cards
-				game.status.drawCount = game.draw.length
-					delete game.draw
-				game.status.discardCount = game.discard.length
-					delete game.discard
-
-			// show phase // hide everyone's cards except faceup cards
-				if (game.status.phase == "show") {
+				// player status // hide everyone's team except if you are evil
 					for (var i in game.players) {
-						if (!playerId || game.players[i].id !== playerId) {
-							for (var j in game.players[i].cards) {
-								if (!game.players[i].cards[j].status.faceup) {
+						delete game.players[i].sessionId
+						delete game.players[i].status = null
+						
+						if (!game.status.ended) {
+							if (!playerId || (game.players[playerId].team !== "evil" && playerId !== i)) {
+								game.players[i].team = null
+							}
+						}
+					}
+
+				// draw & discard // hide all cards
+					game.status.drawCount = game.draw.length
+						delete game.draw
+					game.status.discardCount = game.discard.length
+						delete game.discard
+
+				// show phase // hide everyone's cards except faceup cards
+					if (game.status.phase == "show") {
+						for (var i in game.players) {
+							if (!playerId || game.players[i].id !== playerId) {
+								for (var j in game.players[i].cards) {
+									if (!game.players[i].cards[j].status.faceup) {
+										game.players[i].cards[j] = null
+									}
+								}
+							}
+						}
+					}
+
+				// vote & pick phases // hide everyone's cards except your own
+					if (game.status.phase == "vote" || game.status.phase == "toss" || game.status.phase == "play") {
+						for (var i in game.players) {
+							if (!playerId || game.players[i].id !== playerId) {
+								for (var j in game.players[i].cards) {
 									game.players[i].cards[j] = null
 								}
 							}
 						}
 					}
-				}
 
-			// vote & pick phases // hide everyone's cards except your own
-				if (game.status.phase == "vote" || game.status.phase == "toss" || game.status.phase == "play") {
-					for (var i in game.players) {
-						if (!playerId || game.players[i].id !== playerId) {
-							for (var j in game.players[i].cards) {
-								game.players[i].cards[j] = null
+				// swap phase // if it's not your turn, hide everyone's cards
+					if (game.status.phase == "swap") {
+						if (!playerId || game.status.currentTurn !== playerId) {
+							game.status.currentTurn = null
+
+							for (var i in game.players) {
+								for (var j in game.players[i].cards) {
+									game.players[i].cards[j] = null
+								}
 							}
 						}
 					}
-				}
 
-			// swap phase // if it's not your turn, hide everyone's cards
-				if (game.status.phase == "swap") {
-					if (!playerId || game.status.currentTurn !== playerId) {
-						game.status.currentTurn = null
-
-						for (var i in game.players) {
-							for (var j in game.players[i].cards) {
-								game.players[i].cards[j] = null
-							}
-						}
-					}
-				}
-
-			// return
-				return game
+				// return
+					return game
+			}
+			catch (error) {
+				CORE.logError(error)
+			}
 		}

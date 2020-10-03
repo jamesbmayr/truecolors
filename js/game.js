@@ -1,5 +1,44 @@
 window.addEventListener("load", function() {
 	/*** globals ***/
+		/* triggers */
+			window.TRIGGERS = {
+				submit: "submit",
+				change: "change",
+				input: "input",
+				focus: "focus",
+				blur: "blur",
+				resize: "resize",
+				keydown: "keydown",
+				keyup: "keyup"
+			}
+			if ((/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i).test(navigator.userAgent)) {
+				window.TRIGGERS.click = "touchstart"
+				window.TRIGGERS.mousedown = "touchstart"
+				window.TRIGGERS.mousemove = "touchmove"
+				window.TRIGGERS.mouseup = "touchend"
+				window.TRIGGERS.mouseenter = "touchstart"
+				window.TRIGGERS.mouseleave = "touchend"
+				window.TRIGGERS.rightclick = "contextmenu"
+			}
+			else {
+				window.TRIGGERS.click = "click"
+				window.TRIGGERS.mousedown = "mousedown"
+				window.TRIGGERS.mousemove = "mousemove"
+				window.TRIGGERS.mouseup = "mouseup"
+				window.TRIGGERS.mouseenter = "mouseenter"
+				window.TRIGGERS.mouseleave = "mouseleave"
+				window.TRIGGERS.rightclick = "contextmenu"
+			}
+
+		/* defaults */
+			document.addEventListener("dblclick", function(event) {
+				event.preventDefault()
+			})
+
+			document.addEventListener("contextmenu", function(event) {
+				event.preventDefault()
+			})
+
 		/* constants */
 			var CONSTANTS = {
 				circle: 360
@@ -56,7 +95,39 @@ window.addEventListener("load", function() {
 				}
 			}
 
-	/*** SOCKET ***/
+	/*** tools ***/
+		/* showToast */
+			window.TOASTTIME = null
+			function showToast(data) {
+				try {
+					// clear existing countdowns
+						if (window.TOASTTIME) {
+							clearTimeout(window.TOASTTIME)
+							window.TOASTTIME = null
+						}
+
+					// append
+						if (!window.TOAST) {
+							window.TOAST = document.createElement("div")
+							window.TOAST.id = "toast"
+							window.TOAST.setAttribute("visibility", false)
+							window.TOAST.setAttribute("success", false)
+							document.body.appendChild(window.TOAST)
+						}
+
+					// show
+						window.TOAST.innerHTML = data.message
+						window.TOAST.setAttribute("success", data.success || false)
+						window.TOAST.setAttribute("visibility", true)
+
+					// hide
+						window.TOASTTIME = setTimeout(function() {
+							window.TOAST.setAttribute("visibility", false)
+						}, 5000)
+				} catch (error) {console.log(error)}
+			}
+
+	/*** socket ***/
 		/* start */
 			var SOCKET = null
 			var SOCKETCHECK = null
@@ -89,10 +160,10 @@ window.addEventListener("load", function() {
 						SOCKET.send(null)
 					}
 					SOCKET.onerror = function(error) {
-						window.FUNCTIONS.showToast({success: false, message: error})
+						showToast({success: false, message: error})
 					}
 					SOCKET.onclose = function() {
-						window.FUNCTIONS.showToast({success: false, message: "disconnected"})
+						showToast({success: false, message: "disconnected"})
 						SOCKET = null
 						checkSocket()
 					}
@@ -112,7 +183,6 @@ window.addEventListener("load", function() {
 		/* receiveSocket */
 			function receiveSocket(data) {
 				try {
-					console.log(data)
 					// meta
 						// redirect
 							if (data.location) {
@@ -122,13 +192,13 @@ window.addEventListener("load", function() {
 							
 						// failure
 							if (!data || !data.success) {
-								window.FUNCTIONS.showToast({success: false, message: data.message || "unknown websocket error"})
+								showToast({success: false, message: data.message || "unknown websocket error"})
 								return
 							}
 
 						// toast
 							if (data.message) {
-								FUNCTIONS.showToast(data)
+								showToast(data)
 							}
 
 					// ids
@@ -140,7 +210,7 @@ window.addEventListener("load", function() {
 					// data
 						// game data
 							if (data.game) {
-								document.getElementById("data").innerText = JSON.stringify(data.game, null, "\t") // ???
+								console.log(data) // ???
 								displayCenter(data.game.status)
 								displayPlayers(data.game.players)
 							}
@@ -162,6 +232,7 @@ window.addEventListener("load", function() {
 						var nameElement = document.createElement("button")
 							nameElement.className = "player-name"
 							nameElement.innerText = player.name
+							nameElement.value = player.id
 							nameElement.addEventListener(window.TRIGGERS.click, selectPlayer)
 						playerElement.appendChild(nameElement)
 
@@ -188,6 +259,7 @@ window.addEventListener("load", function() {
 							cardElement.className = "card"
 							cardElement.addEventListener(window.TRIGGERS.click, selectCard)
 							if (card && card.id) { cardElement.id = card.id }
+							if (card && card.id) { cardElement.value = card.id }
 							if (card && card.color && card.status.faceup) { cardElement.setAttribute("color", card.color) }
 							if (card && card.status.selectedForPlay) { cardElement.setAttribute("selectedForPlay", true) }
 							if (card && card.status.selectedForSwap) { cardElement.setAttribute("selectedForSwap", true) }
@@ -294,27 +366,35 @@ window.addEventListener("load", function() {
 			ELEMENTS.gameTable.start.form.addEventListener(window.TRIGGERS.submit, startGame)
 			function startGame(event) {
 				try {
-					// ???
-						return false
-
 					// sendPost
-						SOCKET.send({
+						SOCKET.send(JSON.stringify({
 							action: "startGame"
-						})
+						}))
 				} catch (error) {console.log(error)}
 			}
 
 		/* selectPlayer */
 			function selectPlayer(event) {
 				try {
-					console.log(event) // ???
+					// sendPost
+						if (event.target.value) {
+							SOCKET.send(JSON.stringify({
+								action: "selectPlayer",
+								selectedPlayerId: event.target.value
+							}))
+						}
 				} catch (error) {console.log(error)}
 			}
 
 		/* selectCard */
 			function selectCard(event) {
 				try {
-					console.log(event) // ???
+					if (event.target.value) {
+							SOCKET.send(JSON.stringify({
+								action: "selectCard",
+								selectedCardId: event.target.value
+							}))
+						}
 				} catch (error) {console.log(error)}
 			}
 })
