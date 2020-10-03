@@ -222,7 +222,7 @@
 							}
 
 						// already ended?
-							if (game.status && game.status.ended) {
+							if (game.status && game.status.endTime) {
 								callback({success: false, message: "game already ended", recipients: [REQUEST.session.id]})
 								return
 							}
@@ -257,7 +257,7 @@
 		function startGame(REQUEST, game, callback) {
 			try {
 				// already started?
-					if (game.started) {
+					if (game.startTime) {
 						callback({success: false, message: "game already started", recipients: [REQUEST.session.id]})
 						return
 					}
@@ -341,7 +341,7 @@
 		function selectPlayer(REQUEST, game, callback) {
 			try {
 				// not started?
-					if (!game.started) {
+					if (!game.status.startTime) {
 						callback({success: false, message: "game not started", recipients: [REQUEST.session.id]})
 						return
 					}
@@ -446,7 +446,7 @@
 		function selectCard(REQUEST, game, callback) {
 			try {
 				// not started?
-					if (!game.started) {
+					if (!game.status.startTime) {
 						callback({success: false, message: "game not started", recipients: [REQUEST.session.id]})
 						return
 					}
@@ -454,12 +454,6 @@
 				// wrong phase
 					if (game.status.phase !== "swap" && game.status.phase !== "toss" && game.status.phase !== "play") {
 						callback({success: false, message: "not the right phase", recipients: [REQUEST.session.id]})
-						return
-					}
-
-				// no card
-					if (!REQUEST.post.selectedCardId) {
-						callback({success: false, message: "no card selected", recipients: [REQUEST.session.id]})
 						return
 					}
 
@@ -476,12 +470,18 @@
 								return
 							}
 
+						// no card
+							if (!REQUEST.post.selectedCardId) {
+								callback({success: false, message: "no card selected", recipients: [REQUEST.session.id]})
+								return
+							}
+
 						// selecting own card?
 							var card = game.players[thisPlayerId].cards.find(function(c) { return c.id == REQUEST.post.selectedCardId }) || null
 							if (card) {
 								// select only this card for swap
 									for (var c in game.players[thisPlayerId].cards) {
-										c.status.selectedForSwap = false
+										game.players[thisPlayerId].cards[c].status.selectedForSwap = false
 									}
 									card.status.selectedForSwap = true
 
@@ -502,7 +502,7 @@
 											return
 										}
 
-										callback({success: true, message: "card selected! select another player's card to swap with", game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+										callback({success: true, message: "card selected! select another player's card to swap with", game: sanitizeGame(game, thisPlayerId), recipients: [game.players[thisPlayerId].sessionId]})
 									})
 								return
 							}
@@ -529,7 +529,10 @@
 
 						// unselect cards
 							ownCardForSwap.status.selectedForSwap = false
-							game.players[otherPlayerId].cards[REQUEST.post.selectedCardId].status.selectedForSwap = false
+							otherCardForSwap = game.players[otherPlayerId].cards.find(function(c) {
+								return c.id == REQUEST.post.selectedCardId
+							})
+							otherCardForSwap.status.selectedForSwap = false
 
 						// move cards
 							var ownCardForSwapId = ownCardForSwap.id
@@ -581,8 +584,8 @@
 
 												// update players
 													forceDelay(function() {
-														callback({success: true, message: "wait for all players...", recipients: [game.players[thisPlayerId].sessionId]})
-														callback({success: true, message: "your turn! select one of your cards", recipients: [game.players[nextPlayerId].sessionId]})
+														callback({success: true, message: "wait for all players...", game: sanitizeGame(game, thisPlayerId), recipients: [game.players[thisPlayerId].sessionId]})
+														callback({success: true, message: "your turn! select one of your cards", game: sanitizeGame(game, nextPlayerId), recipients: [game.players[nextPlayerId].sessionId]})
 													}, CORE.getAsset("constants").delayTime)
 											})
 										return
@@ -624,6 +627,12 @@
 			
 				// toss phase
 					if (game.status.phase == "toss") {
+						// no card
+							if (!REQUEST.post.selectedCardId) {
+								callback({success: false, message: "no card selected", recipients: [REQUEST.session.id]})
+								return
+							}
+
 						// find card
 							var card = game.players[thisPlayerId].cards.find(function(c) { return c.id == REQUEST.post.selectedCardId }) || null
 							if (!card) {
@@ -633,7 +642,7 @@
 
 						// select only this card for discard
 							for (var c in game.players[thisPlayerId].cards) {
-								c.status.selectedForDiscard = false
+								game.players[thisPlayerId].cards[c].status.selectedForDiscard = false
 							}
 							card.status.selectedForDiscard = true
 
@@ -703,6 +712,12 @@
 
 				// play phase
 					if (game.status.phase == "play") {
+						// no card
+							if (!REQUEST.post.selectedCardId) {
+								callback({success: false, message: "no card selected", recipients: [REQUEST.session.id]})
+								return
+							}
+
 						// find card
 							var card = game.players[thisPlayerId].cards.find(function(c) { return c.id == REQUEST.post.selectedCardId }) || null
 							if (!card) {
@@ -712,7 +727,7 @@
 
 						// select only this card for play
 							for (var c in game.players[thisPlayerId].cards) {
-								c.status.selectedForPlay = false
+								game.players[thisPlayerId].cards[c].status.selectedForPlay = false
 							}
 							card.status.selectedForPlay = true
 
@@ -823,7 +838,7 @@
 																		for (var i in game.players) {
 																			callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
 																		}
-																	}, CORE.getAsset("constants").delayTime)
+																	}, CORE.getAsset("constants").delayTime * 2)
 															})
 														return
 													}
@@ -851,7 +866,7 @@
 																for (var i in game.players) {
 																	callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
 																}
-															}, CORE.getAsset("constants").delayTime)
+															}, CORE.getAsset("constants").delayTime * 2)
 													})
 											}, CORE.getAsset("constants").delayTime)
 									})
@@ -1061,9 +1076,6 @@
 		module.exports.determineGameWinner = determineGameWinner
 		function determineGameWinner(game) {
 			try {
-				// count points
-					var threshold = Math.floor(CORE.getAsset("constants").numberOfRounds / 2) + 1
-
 				// points
 					var goodPoints = 0
 					var evilPoints = 0
@@ -1074,13 +1086,14 @@
 						else if (game.status.points[i] == "evil") {
 							evilPoints++
 						}
+					}
 
-						if (goodPoints >= threshold) {
-							return "good"
-						}
-						else if (evilPoints >= threshold) {
-							return "evil"
-						}
+				// count
+					if (goodPoints >= CORE.getAsset("constants").goodPointsToWin) {
+						return "good"
+					}
+					else if (evilPoints >= CORE.getAsset("constants").evilPointsToWin) {
+						return "evil"
 					}
 
 				// no winner
@@ -1113,9 +1126,8 @@
 				// player status // hide everyone's team except if you are evil
 					for (var i in game.players) {
 						delete game.players[i].sessionId
-						delete game.players[i].status = null
 						
-						if (!game.status.ended) {
+						if (!game.status.endTime) {
 							if (!playerId || (game.players[playerId].team !== "evil" && playerId !== i)) {
 								game.players[i].team = null
 							}

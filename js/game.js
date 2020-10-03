@@ -57,9 +57,15 @@ window.addEventListener("load", function() {
 					},
 					center: {
 						element: document.querySelector("#game-table-center"),
-						draw: document.querySelector("#game-table-center-draw"),
-						discard: document.querySelector("#game-table-center-discard"),
-						message: document.querySelector("#game-table-center-message"),
+						draw: {
+							element: document.querySelector("#game-table-center-draw"),
+							count: document.querySelector("#game-table-center-draw-count")
+						},
+						discard: {
+							element: document.querySelector("#game-table-center-discard"),
+							count: document.querySelector("#game-table-center-discard-count")
+						},
+						message: document.querySelector("#game-table-center-message-inner"),
 						tracker: {
 							element: document.querySelector("#game-table-center-tracker"),
 							round1: {
@@ -239,7 +245,7 @@ window.addEventListener("load", function() {
 					// team
 						var teamElement = document.createElement("div")
 							teamElement.className = "player-team"
-						playerElement.appendChild(teamElement)
+						nameElement.appendChild(teamElement)
 
 					// cards
 						var cardsElement = document.createElement("div")
@@ -260,7 +266,7 @@ window.addEventListener("load", function() {
 							cardElement.addEventListener(window.TRIGGERS.click, selectCard)
 							if (card && card.id) { cardElement.id = card.id }
 							if (card && card.id) { cardElement.value = card.id }
-							if (card && card.color && card.status.faceup) { cardElement.setAttribute("color", card.color) }
+							if (card && card.color) { cardElement.setAttribute("color", card.color) }
 							if (card && card.status.selectedForPlay) { cardElement.setAttribute("selectedForPlay", true) }
 							if (card && card.status.selectedForSwap) { cardElement.setAttribute("selectedForSwap", true) }
 							if (card && card.status.selectedForDiscard) { cardElement.setAttribute("selectedForDiscard", true) }
@@ -275,11 +281,17 @@ window.addEventListener("load", function() {
 		/* displayCenter */
 			function displayCenter(status) {
 				try {
+					// start?
+						if (status.startTime) {
+							ELEMENTS.gameTable.start.form.setAttribute("visibility", false)
+							ELEMENTS.gameTable.center.element.removeAttribute("outoffocus")
+						}
+
 					// draw
-						ELEMENTS.gameTable.center.draw.innerText = status.drawCount || 0
+						ELEMENTS.gameTable.center.draw.count.innerText = status.drawCount || 0
 
 					// discard
-						ELEMENTS.gameTable.center.discard.innerText = status.discardCount || 0
+						ELEMENTS.gameTable.center.discard.count.innerText = status.discardCount || 0
 
 					// message
 						ELEMENTS.gameTable.center.message.innerText = status.message ? status.message : (
@@ -291,11 +303,12 @@ window.addEventListener("load", function() {
 						for (var i = 0; i < status.trueColors.length; i++) {
 							// card
 								if (status.trueColors[i]) {
-									ELEMENTS.gameTable.center.tracker["round" + (i + 1)].card.setAttribute("color", status.trueColors[i])
+									ELEMENTS.gameTable.center.tracker["round" + (i + 1)].card.setAttribute("color", status.trueColors[i].color)
 								}
 
 							// token
 								if (status.points[i]) {
+									ELEMENTS.gameTable.center.tracker["round" + (i + 1)].token.innerText = status.points[i]
 									ELEMENTS.gameTable.center.tracker["round" + (i + 1)].token.setAttribute("team", status.points[i])
 								}
 						}
@@ -317,7 +330,7 @@ window.addEventListener("load", function() {
 
 						for (var i in players) {
 							var playerElement = ELEMENTS.gameTable.players[players[i].id]
-								playerElement.style.transform = "rotate(" + ((players[i].position - countOffset) * angle) + "deg)"
+								playerElement.style.transform = "translateX(-50%) translateY(-50%) rotate(" + ((players[i].position - countOffset) * angle) + "deg) translateY(200%) "
 						}
 				} catch (error) {console.log(error)}
 			}
@@ -342,13 +355,23 @@ window.addEventListener("load", function() {
 					// indicate team (only self, plus evil know each other)
 						if (player.team) {
 							playerElement.querySelector(".player-team").innerText = player.team
+							playerElement.querySelector(".player-team").setAttribute("team", player.team)
 						}
 						else {
-							playerElement.querySelector(".player-team").innerText = "???"
+							playerElement.querySelector(".player-team").innerText = "?"
 						}
 
-					// if this player has voted for someone, find that player
-						// TBD ???
+					// if this player is you
+						if (player.id == PLAYERID) {
+							for (var i in ELEMENTS.gameTable.players) {
+								ELEMENTS.gameTable.players[i].removeAttribute("selectedForVote")
+							}
+
+							if (player.status && player.status.vote) {
+								var votedForPlayer = ELEMENTS.gameTable.players[player.status.vote]
+								votedForPlayer.setAttribute("selectedForVote", true)
+							}
+						}
 
 					// clear cards
 						var cardsElement = playerElement.querySelector(".player-cards")
@@ -377,24 +400,21 @@ window.addEventListener("load", function() {
 			function selectPlayer(event) {
 				try {
 					// sendPost
-						if (event.target.value) {
-							SOCKET.send(JSON.stringify({
-								action: "selectPlayer",
-								selectedPlayerId: event.target.value
-							}))
-						}
+						SOCKET.send(JSON.stringify({
+							action: "selectPlayer",
+							selectedPlayerId: event.target.value
+						}))
 				} catch (error) {console.log(error)}
 			}
 
 		/* selectCard */
 			function selectCard(event) {
 				try {
-					if (event.target.value) {
-							SOCKET.send(JSON.stringify({
-								action: "selectCard",
-								selectedCardId: event.target.value
-							}))
-						}
+					// sendPost
+						SOCKET.send(JSON.stringify({
+							action: "selectCard",
+							selectedCardId: event.target.value
+						}))
 				} catch (error) {console.log(error)}
 			}
 })

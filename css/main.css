@@ -50,32 +50,19 @@
 			scrollbar-width: none;
 		}
 
-	/* sections */
-		section {
-			position: absolute;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
-			overflow-x: hidden;
-			overflow-y: scroll;
-			background-color: var(--light-gray);
-			color: var(--medium-gray);
-		}		
-
 	/* headings */
 		h1 {
 			float: left;
-			text-align: center;
 			width: 100%;
 			height: var(--huge-font-size);
-			padding: var(--medium-gap-size) 0;
+			padding: 0;
 			margin: 0;
 			line-height: 1;
 			font-size: var(--huge-font-size);
 			font-weight: bold;
 			color: var(--medium-gray);
-			margin-bottom: var(--medium-gap-size);
+			margin-top: var(--small-gap-size);
+			margin-bottom: var(--small-gap-size);
 			font-family: var(--font-0);
 		}
 
@@ -179,6 +166,7 @@
 			-ms-user-select: none !important;
 			-o-user-select: none !important;
 			font-family: var(--font-0);
+			transition: var(--transition-time);
 		}
 
 		button:hover, button:focus {
@@ -229,7 +217,7 @@
 		-o-user-select: none;
 		z-index: 1000;
 		overflow: hidden;
-		transition: 1s;
+		transition: var(--transition-time);
 	}
 
 	/* colors */
@@ -245,9 +233,14 @@
 	/* visibility */
 		*[visibility=false] {
 			pointer-events: none;
-			opacity: 0;
+			opacity: 0 !important;
 			font-size: 0px !important;
 			margin: 0px !important;
 			padding: 0px !important;
 			border: 0px !important;
+		}
+
+		*[outoffocus=true] {
+			pointer-events: none;
+			filter: blur(var(--blur-size));
 		}

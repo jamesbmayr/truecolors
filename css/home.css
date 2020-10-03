@@ -3,11 +3,11 @@
 		position: absolute;
 		top: 0;
 		left: 0;
-		height: 120vh;
-		width: 120vw;
+		height: calc(100vh + var(--card-size));
+		width: calc(100vw + var(--card-size));
 		z-index: -1;
 		pointer-events: none;
-		filter: blur(5px);
+		filter: blur(var(--blur-size));
 		overflow: hidden;
 	}
 
@@ -19,27 +19,27 @@
 		background-size: cover;
 		background-position: center;
 		background-repeat: no-repeat;
-		transition: 1s;
+		transition: var(--transition-time);
 	}
 
 	/* colors */
-		.background-card.red {
+		[color="red"] {
 			background-image: url("assets/red.png");
 		}
 
-		.background-card.yellow {
+		[color="yellow"] {
 			background-image: url("assets/yellow.png");
 		}
 
-		.background-card.green {
+		[color="green"] {
 			background-image: url("assets/green.png");
 		}
 
-		.background-card.blue {
+		[color="blue"] {
 			background-image: url("assets/blue.png");
 		}
 
-		.background-card.white {
+		[color="white"] {
 			background-image: url("assets/white.png");
 		}
 
@@ -47,7 +47,8 @@
 	#container {
 		position: absolute;
 		height: auto;
-		width: 410px;
+		width: calc(4 * (var(--card-size) + var(--small-gap-size)) - var(--medium-gap-size));
+		height: calc(4 * (var(--card-size) + var(--small-gap-size)) - 2 * var(--medium-gap-size));;
 		top: 50%;
 		left: 50%;
 		transform: translateX(-50%) translateY(-50%);
@@ -57,9 +58,21 @@
 		box-shadow: 0 0 var(--shadow-size) var(--medium-gray);
 	}
 
+	/* heading */
+		#heading-logo {
+			background-image: url("assets/logo.png");
+			background-repeat: no-repeat;
+			background-size: contain;
+			height: var(--huge-font-size);
+			width: var(--huge-font-size);
+			float: right;
+		}
+
 	/* forms */
 		#player-name-input {
-			height: calc(100px - 2 * (var(--small-gap-size) + var(--border-size)));
+			font-size: var(--large-font-size);
+			height: calc(var(--card-size) - 2 * (var(--small-gap-size) + var(--border-size)));
+			margin-top: var(--medium-gap-size);
 			margin-bottom: var(--medium-gap-size);
 		}
 
@@ -69,26 +82,32 @@
 		}
 
 		#new-game-button {
+			font-size: var(--large-font-size);
 			float: left;
-			height: 200px;
-			width: 200px;
+			height: calc(2 * var(--card-size));
+			width: calc(2 * var(--card-size));
 			margin: 0;
+			margin-right: var(--small-gap-size);
 		}
 
 		#game-id-input {
+			font-size: var(--large-font-size);
 			float: right;
-			height: calc(100px - 2 * (var(--small-gap-size) + var(--border-size)));
-			width: calc(200px - 2 * (var(--small-gap-size) + var(--border-size)));
+			height: calc(var(--card-size) - 2 * (var(--small-gap-size) + var(--border-size)));
+			width: calc(2 * (var(--card-size) - (var(--small-gap-size) + var(--border-size))));
 			margin: 0;
 			border-bottom-left-radius: 0;
 			border-bottom-right-radius: 0;
+			margin-left: var(--small-gap-size);
 		}
 
 		#join-game-button {
+			font-size: var(--large-font-size);
 			float: right;
 			margin: 0;
-			height: 100px;
-			width: 200px;
+			height: var(--card-size);
+			width: calc(2 * var(--card-size));
 			border-top-left-radius: 0;
 			border-top-right-radius: 0;
+			margin-left: var(--small-gap-size);
 		}

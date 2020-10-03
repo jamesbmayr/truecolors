@@ -199,8 +199,8 @@ window.addEventListener("load", function() {
 						var cards = Array.from(document.querySelectorAll(".background-card"))
 
 					// pick randomly
-						var card = chooseRandom(cards)
-						var color = card.className.replace("background-card ", "")
+						var cardElement = chooseRandom(cards)
+						var color = cardElement.getAttribute("color")
 					
 					// new color
 						do {
@@ -209,7 +209,7 @@ window.addEventListener("load", function() {
 						while (color == newColor)
 
 					// update
-						card.className = "background-card " + newColor
+						cardElement.setAttribute("color", newColor)
 				} catch (error) {console.log(error)}
 			}
 
@@ -229,7 +229,8 @@ window.addEventListener("load", function() {
 
 							// create card
 								var cardElement = document.createElement("div")
-									cardElement.className = "background-card " + chooseRandom(SETTINGS.colors)
+									cardElement.className = "background-card "
+									cardElement.setAttribute("color", chooseRandom(SETTINGS.colors))
 									cardElement.style.height = SETTINGS.backgroundCardHeight + "px"
 									cardElement.style.width  = SETTINGS.backgroundCardWidth + "px"
 								ELEMENTS.background.appendChild(cardElement)

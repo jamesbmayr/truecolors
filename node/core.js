@@ -361,7 +361,8 @@
 						case "sizes":
 							return {
 								"shadow-size": "5px",
-								"border-radius": "5px",
+								"border-radius": "10px",
+								"blur-size": "5px",
 								"border-size": "2px",
 								"small-gap-size": "5px",
 								"medium-gap-size": "10px",
@@ -370,17 +371,19 @@
 								"medium-font-size": "20px",
 								"large-font-size": "35px",
 								"huge-font-size": "50px",
-								"edge-size": "100px",
-								"panel-size": "400px"
+								"card-size": "80px",
+								"transition-time": "1s"
 							}
 						break
 
 						case "constants":
 							return {
 								cookieLength: 1000 * 60 * 60 * 24 * 7,
-								delayTime: 1000 * 3,
+								delayTime: 1000 * 5,
 								handSize: 3,
 								numberOfRounds: 5,
+								goodPointsToWin: 1,
+								evilPointsToWin: 5,
 								deckSize: 72,
 								cardColors: ["red", "yellow", "green", "blue", "white"],
 								cardDistribution: ["red", "yellow", "green", "blue", "white", "white"],
@@ -388,14 +391,14 @@
 								teamDistribution: {
 									"4": {good: 3, evil: 1},
 									"5": {good: 4, evil: 1},
-									"6": {good: 4, evil: 2},
-									"7": {good: 5, evil: 2},
-									"8": {good: 6, evil: 2},
-									"9": {good: 6, evil: 3},
-									"10": {good: 7, evil: 3},
-									"11": {good: 8, evil: 3},
-									"12": {good: 8, evil: 4}
-								}								
+									"6": {good: 5, evil: 1},
+									"7": {good: 6, evil: 1},
+									"8": {good: 7, evil: 1},
+									"9": {good: 8, evil: 1},
+									"10": {good: 9, evil: 1},
+									"11": {good: 10, evil: 1},
+									"12": {good: 11, evil: 1}
+								}
 							}
 						break
 
@@ -407,6 +410,7 @@
 								for (var i in constants.cardColors) {
 									var card = getSchema("card")
 										card.color = constants.cardColors[i]
+										delete card.status
 									trueColors.push(card)
 								}
 							}

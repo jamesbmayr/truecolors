@@ -13,10 +13,13 @@
 	<body>
 		<div id="game-table">
 			<form id="game-table-start-form" action="javascript:;" method="post">
-				<button id="game-table-start-button">start game <script node>REQUEST.path[REQUEST.path.length - 1].toUpperCase()</script>node></button>
+				<button id="game-table-start-button">start game<span id="game-table-start-button-gameid"><script node>REQUEST.path[REQUEST.path.length - 1]</script>node></span></button>
 			</form>
-			<div id="game-table-center">
-				<div id="game-table-center-draw"></div>
+			<div id="game-table-center" outoffocus=true>
+				<div id="game-table-center-piles">
+					<div id="game-table-center-draw">draw<div id="game-table-center-draw-count"></div></div>
+					<div id="game-table-center-discard">discard<div id="game-table-center-discard-count"></div></div>
+				</div>
 				<div id="game-table-center-tracker">
 					<div id="game-table-center-tracker-round-1" class="game-table-center-tracker-round">
 						<div class="game-table-center-tracker-round-card"></div>
@@ -39,8 +42,9 @@
 						<div class="game-table-center-tracker-round-token"></div>
 					</div>
 				</div>
-				<div id="game-table-center-discard"></div>
-				<div id="game-table-center-message"></div>
+				<div id="game-table-center-message-outer">
+					<div id="game-table-center-message-inner"></div>
+				</div>
 			</div>
 			<div id="game-table-players"></div>
 		</div>
