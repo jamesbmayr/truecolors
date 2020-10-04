@@ -1,5 +1,5 @@
 # True Colors
-
+True Colors is a multiplayer asymmetrical team card game by James Mayr
 
 ---
 <pre>
@@ -25,18 +25,18 @@ truecolors
 |   |- websocket
 |
 |- node
-|   |- core.js (logError, logStatus, logMessage, logTime; getEnvironment, getContentType, getSchema, getAsset; isNumLet; renderHTML, constructHeaders, duplicateObject, alphabetizeArray; hashRandom, generateRandom, chooseRandom, rollRandom; accessDatabase)
-|   |- game.js (createOne; readOne, unreadOne; updateOne; deleteOne)
-|   |- home.js (signIn, signOut)
-|   |- session.js (createOne; readOne; updateOne)
+|   |- core.js
+|   |- game.js
+|   |- session.js
 |
 |- js
-|   |- game.js ()
-|   |- home.js (submitSignUp, submitSignIn; switchSignUp, switchSignIn)
-|   |- main.js (isNumLet; duplicateObject, sendPost, showToast; searchSelect, selectOption, cancelSearch; generateRandom, sortRandom; resizeCanvas, clearCanvas, translateCanvas, rotateCanvas, drawLine, drawCircle, drawRectangle, drawImage, drawText)
+|   |- game.js
+|   |- home.js
+|   |- main.js
 |
 |- css
 |   |- game.css
+|   |- home.css
 |   |- main.css
 |
 |- html
@@ -46,4 +46,9 @@ truecolors
 |
 |- assets
 	|- logo.png
+	|- red.png
+	|- yellow.png
+	|- green.png
+	|- blue.png
+	|- white.png
 </pre>
