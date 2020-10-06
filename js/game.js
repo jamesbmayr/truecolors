@@ -49,12 +49,12 @@ window.addEventListener("load", function() {
 
 		/* elements */
 			var ELEMENTS = {
+				start: {
+					form: document.querySelector("#start-form"),
+					button: document.querySelector("#start-button")
+				},
 				gameTable: {
 					element: document.querySelector("#game-table"),
-					start: {
-						form: document.querySelector("#game-table-start-form"),
-						button: document.querySelector("#game-table-start-button")
-					},
 					center: {
 						element: document.querySelector("#game-table-center"),
 						draw: {
@@ -283,7 +283,7 @@ window.addEventListener("load", function() {
 				try {
 					// start?
 						if (status.startTime) {
-							ELEMENTS.gameTable.start.form.setAttribute("visibility", false)
+							ELEMENTS.start.form.setAttribute("visibility", false)
 							ELEMENTS.gameTable.center.element.removeAttribute("outoffocus")
 						}
 
@@ -386,7 +386,7 @@ window.addEventListener("load", function() {
 
 	/*** submits ***/
 		/* startGame */
-			ELEMENTS.gameTable.start.form.addEventListener(window.TRIGGERS.submit, startGame)
+			ELEMENTS.start.form.addEventListener(window.TRIGGERS.submit, startGame)
 			function startGame(event) {
 				try {
 					// sendPost

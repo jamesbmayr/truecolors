@@ -82,8 +82,14 @@
 								return
 							}
 
-						// player count
+						// already a player?
 							var game = results.documents[0]
+							if (Object.keys(game.players).find(function(p) { return game.players[p].sessionId == REQUEST.session.id })) {
+								callback({success: true, message: "re-joining game", location: "../game/" + game.id})
+								return
+							}
+
+						// player count
 							var teamDistribution = CORE.getAsset("constants").teamDistribution
 							var maximumPlayers = Number(Object.keys(teamDistribution).sort(function(a, b) {
 								return Number(b) - Number(a)

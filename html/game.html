@@ -11,42 +11,97 @@
 		<script src="game.js"></script>
 	</head>
 	<body>
-		<div id="game-table">
-			<form id="game-table-start-form" action="javascript:;" method="post">
-				<button id="game-table-start-button">start game<span id="game-table-start-button-gameid"><script node>REQUEST.path[REQUEST.path.length - 1]</script>node></span></button>
-			</form>
-			<div id="game-table-center" outoffocus=true>
-				<div id="game-table-center-piles">
-					<div id="game-table-center-draw">draw<div id="game-table-center-draw-count"></div></div>
-					<div id="game-table-center-discard">discard<div id="game-table-center-discard-count"></div></div>
+		<form id="start-form" action="javascript:;" method="post">
+			<button id="start-button">start game<span id="start-button-gameid"><script node>REQUEST.path[REQUEST.path.length - 1]</script>node></span></button>
+		</form>
+		<details id="rules">
+			<summary id="rules-toggle">rules</summary>
+			<div id="rules-inner">
+				<div class="rules-section">
+					<span class="rules-heading">Start</span>
+					<p class="rules-paragraph">All players have a secret role. Most players are Good, but they won't know who is Evil. (See team distribution below.)</p>
+					<p class="rules-paragraph">At the beginning of each round, a color is revealed in the center. These colors will appear (in a random and unknown order): <b><script node>getAsset("constants").cardColors.join(", ")</script>node></b>.
+					<p class="rules-paragraph">The game has <b><script node>getAsset("constants").numberOfRounds</script>node></b> rounds. Each round is divided into phases.</p>
 				</div>
-				<div id="game-table-center-tracker">
-					<div id="game-table-center-tracker-round-1" class="game-table-center-tracker-round">
-						<div class="game-table-center-tracker-round-card"></div>
-						<div class="game-table-center-tracker-round-token"></div>
-					</div>
-					<div id="game-table-center-tracker-round-2" class="game-table-center-tracker-round">
-						<div class="game-table-center-tracker-round-card"></div>
-						<div class="game-table-center-tracker-round-token"></div>
-					</div>
-					<div id="game-table-center-tracker-round-3" class="game-table-center-tracker-round">
-						<div class="game-table-center-tracker-round-card"></div>
-						<div class="game-table-center-tracker-round-token"></div>
-					</div>
-					<div id="game-table-center-tracker-round-4" class="game-table-center-tracker-round">
-						<div class="game-table-center-tracker-round-card"></div>
-						<div class="game-table-center-tracker-round-token"></div>
-					</div>
-					<div id="game-table-center-tracker-round-5" class="game-table-center-tracker-round">
-						<div class="game-table-center-tracker-round-card"></div>
-						<div class="game-table-center-tracker-round-token"></div>
-					</div>
+				<div class="rules-section">
+					<span class="rules-heading">Phases</span>
+					<ol>
+						<li class="rules-phase">
+							<span class="rules-heading">Vote</span>
+							<p class="rules-paragraph">During this phase, players can see only their own cards. All players select 1 person to start the round. Once a majority agrees on a leader, that player begins the next phase, and turn order continues clockwise.</p>
+						</li>
+						<li class="rules-phase">
+							<span class="rules-heading">Swap</span>
+							<p class="rules-paragraph">On your turn, look at all cards of all players. Select 1 of your own cards and swap it with 1 card of another player. You will only see cards when it is your turn.</p>
+						</li>
+						<li class="rules-phase">
+							<span class="rules-heading">Toss</span>
+							<p class="rules-paragraph">All players look at their own hands and choose 1 card to discard. Other players will not see your selection.</p>
+						</li>
+						<li class="rules-phase">
+							<span class="rules-heading">Play</span>
+							<p class="rules-paragraph">All players look at their own cards and choose 1 card to play. After everyone has selected, these cards will be revealed.</p>
+						</li>
+						<li class="rules-phase">
+							<span class="rules-heading">Show</span>
+							<p class="rules-paragraph">If all the played cards match the round color, the Good team earns a point. Note that some cards (<b><script node>getAsset("constants").wildcardColors.join(", ")</script>node></b>) are wild and can qualify for any round color.</p>
+							<p class="rules-paragraph">But if even 1 card does not match, then Evil earns a point!</p>
+						</li>
+					</ol>
 				</div>
-				<div id="game-table-center-message-outer">
-					<div id="game-table-center-message-inner"></div>
+				<div class="rules-section">
+					<span class="rules-heading">Game End</span>
+					<p class="rules-paragraph">The game ends after Good or Evil score enough points to win:</p>
+					<ul>
+						<li>Good points: <b><script node>getAsset("constants").goodPointsToWin</script>node></b></li>
+						<li>Evil points: <b><script node>getAsset("constants").evilPointsToWin</script>node></b></li>
+					</ul>
+				</div>
+				<div class="rules-section">
+					<span class="rules-heading">Teams</span>
+					<p class="rules-paragraph">Here are the team distributions for each player count:</p>
+					<ul>
+						<script node>var teamDistribution = getAsset("constants").teamDistribution; Object.keys(teamDistribution).map(function(count) { return "<li>" + count + " = " + teamDistribution[count].good + " good + " + teamDistribution[count].evil + " evil</li>" }).join("")</script>node>
+					</ul>
 				</div>
 			</div>
-			<div id="game-table-players"></div>
+			<div id="rules-background"></div>
+		</details>
+		<div id="game-table">
+			<div id="game-table-inner">
+				<div id="game-table-center" outoffocus=true>
+					<div id="game-table-center-piles">
+						<div id="game-table-center-draw">draw<div id="game-table-center-draw-count"></div></div>
+						<div id="game-table-center-discard">discard<div id="game-table-center-discard-count"></div></div>
+					</div>
+					<div id="game-table-center-tracker">
+						<div id="game-table-center-tracker-round-1" class="game-table-center-tracker-round">
+							<div class="game-table-center-tracker-round-card"></div>
+							<div class="game-table-center-tracker-round-token"></div>
+						</div>
+						<div id="game-table-center-tracker-round-2" class="game-table-center-tracker-round">
+							<div class="game-table-center-tracker-round-card"></div>
+							<div class="game-table-center-tracker-round-token"></div>
+						</div>
+						<div id="game-table-center-tracker-round-3" class="game-table-center-tracker-round">
+							<div class="game-table-center-tracker-round-card"></div>
+							<div class="game-table-center-tracker-round-token"></div>
+						</div>
+						<div id="game-table-center-tracker-round-4" class="game-table-center-tracker-round">
+							<div class="game-table-center-tracker-round-card"></div>
+							<div class="game-table-center-tracker-round-token"></div>
+						</div>
+						<div id="game-table-center-tracker-round-5" class="game-table-center-tracker-round">
+							<div class="game-table-center-tracker-round-card"></div>
+							<div class="game-table-center-tracker-round-token"></div>
+						</div>
+					</div>
+					<div id="game-table-center-message-outer">
+						<div id="game-table-center-message-inner"></div>
+					</div>
+				</div>
+				<div id="game-table-players"></div>
+			</div>
 		</div>
 	</body>
 </html>
