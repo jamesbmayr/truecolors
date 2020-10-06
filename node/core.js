@@ -264,7 +264,8 @@
 								},
 								draw: getAsset("deck"),
 								discard: [],
-								players: {}
+								players: {},
+								spectators: {}
 							}
 						break
 
@@ -392,12 +393,15 @@
 									"4": {good: 3, evil: 1},
 									"5": {good: 4, evil: 1},
 									"6": {good: 5, evil: 1},
-									"7": {good: 6, evil: 1},
-									"8": {good: 7, evil: 1},
-									"9": {good: 8, evil: 1},
-									"10": {good: 9, evil: 1},
-									"11": {good: 10, evil: 1},
-									"12": {good: 11, evil: 1}
+									"7": {good: 5, evil: 2},
+									"8": {good: 6, evil: 2},
+									"9": {good: 7, evil: 2},
+									"10": {good: 8, evil: 2},
+									"11": {good: 8, evil: 3},
+									"12": {good: 9, evil: 3},
+									"13": {good: 10, evil: 3},
+									"14": {good: 11, evil: 3},
+									"15": {good: 12, evil: 3},
 								}
 							}
 						break

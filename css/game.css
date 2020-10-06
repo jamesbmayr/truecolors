@@ -344,6 +344,7 @@
 				border-radius: var(--border-radius);
 				background-color: var(--light-gray);
 				box-shadow: 0 0 var(--shadow-size) var(--medium-gray) inset;
+				text-align: center;
 			}
 
 			.player .card {

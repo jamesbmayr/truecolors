@@ -163,7 +163,7 @@
 								return
 							}
 
-						// not a player
+						// get player id
 							var game = results.documents[0]
 							var playerId = null
 							if (Object.keys(game.players).length) {
@@ -171,14 +171,48 @@
 									return game.players[p].sessionId == REQUEST.session.id
 								})
 							}
-							if (!playerId) {
-								callback({success: false, message: "not a player", location: "../../../../", recipients: [REQUEST.session.id]})
-								return
-							}							
 
-						// all players
-							for (var i in game.players) {
-								callback({success: true, message: null, playerId: i, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+						// player --> update all players & spectators
+							if (playerId) {
+								// all players
+									for (var i in game.players) {
+										callback({success: true, message: null, playerId: i, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+									}
+
+								// spectators
+									callback({success: true, message: null, game: sanitizeGame(game, null), recipients: Object.keys(game.spectators)})
+								return
+							}
+
+						// existing spectator
+							if (game.spectators[REQUEST.session.id]) {
+								callback({success: true, message: "now observing the game", playerId: null, game: sanitizeGame(game, null), recipients: [REQUEST.session.id]})
+								return
+							}
+
+						// new spectator
+							if (!game.spectators[REQUEST.session.id]) {
+								// add spectator
+									game.updated = new Date().getTime()
+									game.spectators[REQUEST.session.id] = true
+
+								// query
+									var query = CORE.getSchema("query")
+										query.collection = "games"
+										query.command = "update"
+										query.filters = {id: game.id}
+										query.document = {updated: game.updated, spectators: game.spectators}
+
+								// update
+									CORE.accessDatabase(query, function(results) {
+										if (!results.success) {
+											callback(results)
+											return
+										}
+
+										// for this spectator
+											callback({success: true, message: "now observing the game", playerId: null, game: sanitizeGame(game, null), recipients: [REQUEST.session.id]})
+									})
 							}
 					})
 			}
@@ -215,14 +249,14 @@
 				// find
 					CORE.accessDatabase(query, function(results) {
 						if (!results.success) {
-							results.recipients = [REQUEST.user.id]
+							results.recipients = [REQUEST.session.id]
 							callback(results)
 							return
 						}
 
 						// not a player?
 							var game = results.documents[0]
-							if (!Object.keys(game.players).find(function(p) { return game.players[p].sessionId == REQUEST.session.id }).length) {
+							if (!Object.keys(game.players).find(function(p) { return game.players[p].sessionId == REQUEST.session.id })) {
 								callback({success: false, message: "not a player", recipients: [REQUEST.session.id]})
 								return
 							}
@@ -334,6 +368,9 @@
 							for (var i in game.players) {
 								callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
 							}
+						
+						// spectators
+							callback({success: true, message: null, game: sanitizeGame(game, null), recipients: Object.keys(game.spectators)})
 					})
 			}
 			catch (error) {
@@ -431,9 +468,13 @@
 
 								// update players
 									forceDelay(function() {
-										for (var i in game.players) {
-											callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
-										}
+										// all players
+											for (var i in game.players) {
+												callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+											}
+
+										// spectators
+											callback({success: true, message: null, game: sanitizeGame(game, null), recipients: Object.keys(game.spectators)})
 
 										// round leader starts
 											callback({success: true, message: "your turn! select one of your cards", recipients: [game.players[roundLeaderId].sessionId]})
@@ -508,7 +549,8 @@
 											return
 										}
 
-										callback({success: true, message: "card selected! select another player's card to swap with", game: sanitizeGame(game, thisPlayerId), recipients: [game.players[thisPlayerId].sessionId]})
+										// update this player
+											callback({success: true, message: "card selected! select another player's card to swap with", game: sanitizeGame(game, thisPlayerId), recipients: [game.players[thisPlayerId].sessionId]})
 									})
 								return
 							}
@@ -590,8 +632,11 @@
 
 												// update players
 													forceDelay(function() {
-														callback({success: true, message: "wait for all players...", game: sanitizeGame(game, thisPlayerId), recipients: [game.players[thisPlayerId].sessionId]})
-														callback({success: true, message: "your turn! select one of your cards", game: sanitizeGame(game, nextPlayerId), recipients: [game.players[nextPlayerId].sessionId]})
+														// update this player
+															callback({success: true, message: "wait for all players...", game: sanitizeGame(game, thisPlayerId), recipients: [game.players[thisPlayerId].sessionId]})
+
+														// update next player
+															callback({success: true, message: "your turn! select one of your cards", game: sanitizeGame(game, nextPlayerId), recipients: [game.players[nextPlayerId].sessionId]})
 													}, CORE.getAsset("constants").delayTime)
 											})
 										return
@@ -622,9 +667,13 @@
 
 										// update players
 											forceDelay(function() {
-												for (var i in game.players) {
-													callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
-												}
+												// all players
+													for (var i in game.players) {
+														callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+													}
+
+												// spectators
+													callback({success: true, message: null, game: sanitizeGame(game, null), recipients: Object.keys(game.spectators)})
 											}, CORE.getAsset("constants").delayTime)
 									})
 							})
@@ -707,9 +756,13 @@
 
 										// update all players
 											forceDelay(function() {
-												for (var i in game.players) {
-													callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
-												}
+												// all players
+													for (var i in game.players) {
+														callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+													}
+
+												// spectators
+													callback({success: true, message: null, game: sanitizeGame(game, null), recipients: Object.keys(game.spectators)})
 											}, CORE.getAsset("constants").delayTime)
 									})
 							})
@@ -794,9 +847,13 @@
 
 										// update players
 											forceDelay(function() {
-												for (var i in game.players) {
-													callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
-												}
+												// all players
+													for (var i in game.players) {
+														callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+													}
+
+												// spectators
+													callback({success: true, message: null, game: sanitizeGame(game, null), recipients: Object.keys(game.spectators)})
 
 												// game continues?
 													var winningTeam = determineGameWinner(game)
@@ -841,9 +898,13 @@
 
 																// update players
 																	forceDelay(function() {
-																		for (var i in game.players) {
-																			callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
-																		}
+																		// all players
+																			for (var i in game.players) {
+																				callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+																			}
+
+																		// spectators
+																			callback({success: true, message: null, game: sanitizeGame(game, null), recipients: Object.keys(game.spectators)})
 																	}, CORE.getAsset("constants").delayTime * 2)
 															})
 														return
@@ -869,9 +930,13 @@
 
 														// update players
 															forceDelay(function() {
-																for (var i in game.players) {
-																	callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
-																}
+																// all players
+																	for (var i in game.players) {
+																		callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+																	}
+
+																// spectators
+																	callback({success: true, message: null, game: sanitizeGame(game, null), recipients: Object.keys(game.spectators)})
 															}, CORE.getAsset("constants").delayTime * 2)
 													})
 											}, CORE.getAsset("constants").delayTime)
