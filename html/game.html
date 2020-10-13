@@ -14,6 +14,11 @@
 		<form id="start-form" action="javascript:;" method="post">
 			<button id="start-button">start game<span id="start-button-gameid"><script node>REQUEST.path[REQUEST.path.length - 1]</script>node></span></button>
 		</form>
+		<a id="back-link" href="../../" visibility="false"><span id="back-link-inner">play again</span></a>
+		<div id="talk">
+			<div id="talk-yes">talk &#x2714;</div>
+			<div id="talk-no">no talk &#x2716;</div>
+		</div>
 		<details id="rules">
 			<summary id="rules-toggle">rules</summary>
 			<div id="rules-inner">

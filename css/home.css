@@ -74,6 +74,7 @@
 			height: calc(var(--card-size) - 2 * (var(--small-gap-size) + var(--border-size)));
 			margin-top: var(--medium-gap-size);
 			margin-bottom: var(--medium-gap-size);
+			text-transform: uppercase;
 		}
 
 		#new-game-form, #join-game-form {
@@ -99,6 +100,7 @@
 			border-bottom-left-radius: 0;
 			border-bottom-right-radius: 0;
 			margin-left: var(--small-gap-size);
+			text-transform: uppercase;
 		}
 
 		#join-game-button {

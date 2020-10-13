@@ -9,15 +9,15 @@
 		function createOne(REQUEST, callback) {
 			try {
 				// name
-					if (!REQUEST.post.name || REQUEST.post.name.length < 4 || REQUEST.post.name.length > 16 || !CORE.isNumLet(REQUEST.post.name)) {
-						callback({success: false, message: "name must be 4-16 letters and numbers"})
+					if (!REQUEST.post.name || REQUEST.post.name.length < 3 || REQUEST.post.name.length > 15 || !CORE.isNumLet(REQUEST.post.name)) {
+						callback({success: false, message: "name must be 3-15 letters and numbers"})
 						return
 					}
 
 				// create
 					var player = CORE.getSchema("player")
 						player.sessionId = REQUEST.session.id
-						player.name = REQUEST.post.name
+						player.name = REQUEST.post.name.toUpperCase()
 
 					var game = CORE.getSchema("game")
 						game.players[player.id] = player
@@ -57,8 +57,8 @@
 		function joinOne(REQUEST, callback) {
 			try {
 				// name
-					if (!REQUEST.post.name || REQUEST.post.name.length < 4 || REQUEST.post.name.length > 16 || !CORE.isNumLet(REQUEST.post.name)) {
-						callback({success: false, message: "name must be 4-16 letters and numbers"})
+					if (!REQUEST.post.name || REQUEST.post.name.length < 3 || REQUEST.post.name.length > 15 || !CORE.isNumLet(REQUEST.post.name)) {
+						callback({success: false, message: "name must be 3-15 letters and numbers"})
 						return
 					}
 
@@ -69,6 +69,7 @@
 					}
 
 				// query
+					REQUEST.post.gameId = REQUEST.post.gameId.toLowerCase()
 					var query = CORE.getSchema("query")
 						query.collection = "games"
 						query.command = "find"
@@ -84,7 +85,8 @@
 
 						// already a player?
 							var game = results.documents[0]
-							if (Object.keys(game.players).find(function(p) { return game.players[p].sessionId == REQUEST.session.id })) {
+							var playerKeys = Object.keys(game.players)
+							if (playerKeys.find(function(p) { return game.players[p].sessionId == REQUEST.session.id })) {
 								callback({success: true, message: "re-joining game", location: "../game/" + game.id})
 								return
 							}
@@ -94,16 +96,23 @@
 							var maximumPlayers = Number(Object.keys(teamDistribution).sort(function(a, b) {
 								return Number(b) - Number(a)
 							}))
-							if (Object.keys(game.players).length >= maximumPlayers) {
+							if (playerKeys.length >= maximumPlayers) {
 								callback({success: false, message: "maximum player count reached"})
+								return
+							}
+
+						// duplicate name
+							var names = playerKeys.map(function(p) { return game.players[p].name }) || []
+							if (names.includes(REQUEST.post.name.toUpperCase())) {
+								callback({success: false, message: "name already taken"})
 								return
 							}
 
 						// create player
 							var player = CORE.getSchema("player")
 								player.sessionId = REQUEST.session.id
-								player.name = REQUEST.post.name
-								player.position = Object.keys(game.players).length
+								player.name = REQUEST.post.name.toUpperCase()
+								player.position = playerKeys.length
 
 						// add to game
 							game.players[player.id] = player
@@ -407,12 +416,27 @@
 						return
 					}
 
-				// update
+				// vote
 					var thisPlayerId = Object.keys(game.players).find(function(p) {
 						return game.players[p].sessionId == REQUEST.session.id
 					})
 					game.players[thisPlayerId].status.vote = REQUEST.post.selectedPlayerId
-					game.status.message = "select a player to go first (no majority yet!)"
+
+				// tally votes
+					var votes = {}
+					for (var i in game.players) {
+						if (game.players[i].status.vote) {
+							votes[game.players[i].status.vote] = (votes[game.players[i].status.vote] || 0) + 1
+						}
+					}
+
+					var tallyString = []
+					for (var i in votes) {
+						tallyString.push(game.players[i].name + " (" + votes[i] + ")")
+					}
+
+				// update
+					game.status.message = "votes: " + (tallyString.join(", ") || "???")
 					game.updated = new Date().getTime()
 
 				// query
@@ -429,8 +453,13 @@
 							return
 						}
 
-						// update this player
-							callback({success: true, message: "you voted! wait for other players...", game: sanitizeGame(game, thisPlayerId), recipients: [REQUEST.session.id]})
+						// all players
+							for (var i in game.players) {
+								callback({success: true, message: null, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+							}
+
+						// spectators
+							callback({success: true, message: null, game: sanitizeGame(game, null), recipients: Object.keys(game.spectators)})
 
 						// no consensus round leader?
 							var roundLeaderId = determineRoundLeader(game)
@@ -449,7 +478,7 @@
 							game.status.currentTurn = roundLeaderId
 
 							game.status.phase = "swap"
-							game.status.message = game.players[game.status.roundLeader].name + " leads the round of swaps"
+							game.status.message = game.players[game.status.roundLeader].name + " leads the round of swaps (cards are hidden before & after your turn)"
 							game.updated = new Date().getTime()
 
 						// query

@@ -151,8 +151,8 @@ window.addEventListener("load", function() {
 				try {
 					// validation
 						var playerName = ELEMENTS.playerNameInput.value || null
-						if (!playerName || playerName.length < 4 || playerName.length > 16 || !isNumLet(playerName)) {
-							showToast({success: false, message: "name must be 4-16 letters & numbers"})
+						if (!playerName || playerName.length < 3 || playerName.length > 15 || !isNumLet(playerName)) {
+							showToast({success: false, message: "name must be 3-15 letters & numbers"})
 							return
 						}
 
@@ -170,8 +170,8 @@ window.addEventListener("load", function() {
 				try {
 					// validation
 						var playerName = ELEMENTS.playerNameInput.value || null
-						if (!playerName || playerName.length < 4 || playerName.length > 16 || !isNumLet(playerName)) {
-							showToast({success: false, message: "name must be 4-16 letters & numbers"})
+						if (!playerName || playerName.length < 3 || playerName.length > 15 || !isNumLet(playerName)) {
+							showToast({success: false, message: "name must be 3-15 letters & numbers"})
 							return
 						}
 

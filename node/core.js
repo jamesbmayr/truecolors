@@ -248,7 +248,7 @@
 
 						case "game":
 							return {
-								id: generateRandom(null, 4),
+								id: generateRandom(null, 4).toLowerCase(),
 								created: new Date().getTime(),
 								updated: new Date().getTime(),
 								status: {

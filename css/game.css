@@ -27,7 +27,6 @@
 			margin: 0;
 			font-size: var(--medium-font-size);
 			border-radius: 100%;
-			box-shadow: 0 0 var(--shadow-size) var(--dark-gray);
 		}
 
 		#start-button-gameid {
@@ -37,6 +36,69 @@
 			font-size: var(--large-font-size);
 			text-transform: uppercase;
 		}
+
+/*** finish ***/
+	#back-link {
+		z-index: 100;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translateX(-50%) translateY(calc(-50% - var(--medium-gap-size)));
+		height: calc(2 * (var(--card-size) + 2 * var(--small-gap-size)));
+		width: calc(2 * (var(--card-size) + 2 * var(--small-gap-size)));
+		background-color: var(--medium-gray);
+		border-radius: 100%;
+		text-align: center;
+		box-shadow: 0 0 var(--shadow-size) var(--medium-gray);
+	}
+
+	#back-link:hover, #back-link:focus {
+		box-shadow: 0 0 var(--shadow-size) var(--dark-gray);
+		text-shadow: none;
+	}
+
+	/* span */
+		#back-link-inner {
+			display: block;
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translateX(-50%) translateY(-50%);
+			margin: 0;
+			pointer-events: none;
+			font-size: var(--large-font-size);
+			color: var(--light-gray);
+		}
+
+/*** talk ***/
+	#talk {
+		position: absolute;
+		top: var(--medium-gap-size);
+		left: var(--medium-gap-size);
+		z-index: 101;
+		width: calc(var(--card-size));
+		height: calc(var(--medium-font-size));
+		background-color: rgba(221,221,221,0.5);
+		border-radius: var(--border-radius);
+		box-shadow: 0 0 var(--shadow-size) var(--medium-gray);
+		text-align: center;
+		padding: var(--small-gap-size);
+		font-size: var(--medium-font-size);
+		overflow: hidden;
+	}
+
+	#talk[talk=true] #talk-no {
+		display: none;
+	}
+
+	#talk[talk=false] #talk-yes {
+		display: none;
+	}
+
+	#talk[talk=false] {
+		background-color: var(--dark-gray);
+		color: var(--light-gray);
+	}
 
 /*** rules ***/
 	#rules {
@@ -254,16 +316,16 @@
 				}
 
 				.game-table-center-tracker-round-token {
-					height: calc(var(--card-size) / 8);
+					height: auto;
 					width: calc(var(--card-size) / 2);
 					border-radius: var(--border-radius);
 					margin: auto auto;
 					margin-top: var(--medium-gap-size);
 					margin-bottom: var(--medium-gap-size);
-					font-size: calc(var(--small-font-size) / 2);
+					font-size: calc(var(--medium-font-size) / 2);
 					font-weight: bold;
 					text-transform: uppercase;
-					padding: var(--small-gap-size) 0;
+					padding: var(--border-size);
 				}
 
 		/* message */
@@ -323,12 +385,12 @@
 				border-radius: var(--border-radius);
 				background-color: var(--light-gray);
 				color: var(--medium-gray);
-				font-size: calc(var(--small-font-size) / 2);
+				font-size: var(--small-font-size);
 				font-weight: bold;
 				text-transform: uppercase;
 				vertical-align: middle;
-				padding: calc(var(--small-gap-size) / 2);
 				pointer-events: none;
+				padding: var(--border-size);
 			}
 
 			.player[selectedForVote=true] {

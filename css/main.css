@@ -166,7 +166,6 @@
 			-ms-user-select: none !important;
 			-o-user-select: none !important;
 			font-family: var(--font-0);
-			transition: var(--transition-time);
 		}
 
 		button:hover, button:focus {

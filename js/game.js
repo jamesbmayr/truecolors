@@ -53,6 +53,9 @@ window.addEventListener("load", function() {
 					form: document.querySelector("#start-form"),
 					button: document.querySelector("#start-button")
 				},
+				backlink: document.querySelector("#back-link"),
+				talk: document.querySelector("#talk"),
+				rules: document.querySelector("#rules"),
 				gameTable: {
 					element: document.querySelector("#game-table"),
 					center: {
@@ -216,7 +219,6 @@ window.addEventListener("load", function() {
 					// data
 						// game data
 							if (data.game) {
-								console.log(data) // ???
 								displayCenter(data.game.status)
 								displayPlayers(data.game.players)
 							}
@@ -285,6 +287,19 @@ window.addEventListener("load", function() {
 						if (status.startTime) {
 							ELEMENTS.start.form.setAttribute("visibility", false)
 							ELEMENTS.gameTable.center.element.removeAttribute("outoffocus")
+						}
+
+					// end?
+						if (status.endTime) {
+							ELEMENTS.backlink.removeAttribute("visibility")
+						}
+
+					// phase
+						if (!status.phase || status.phase == "vote" || status.phase == "show") {
+							ELEMENTS.talk.setAttribute("talk", true)
+						}
+						else {
+							ELEMENTS.talk.setAttribute("talk", false)
 						}
 
 					// draw
