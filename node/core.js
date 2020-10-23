@@ -224,11 +224,8 @@
 								name: null,
 								position: 0,
 								team: null,
-								status: {
-									active: false,
-									isTurn: false,
-									vote: null
-								},
+								isTurn: false,
+								vote: null,
 								cards: []
 							}
 						break
@@ -378,13 +375,14 @@
 						break
 
 						case "constants":
+							var numberOfRounds = 4
 							return {
 								cookieLength: 1000 * 60 * 60 * 24 * 7,
 								delayTime: 1000 * 5,
 								handSize: 3,
-								numberOfRounds: 5,
+								numberOfRounds: numberOfRounds,
 								goodPointsToWin: 1,
-								evilPointsToWin: 5,
+								evilPointsToWin: numberOfRounds,
 								deckSize: 72,
 								cardColors: ["red", "yellow", "green", "blue", "white"],
 								cardDistribution: ["red", "yellow", "green", "blue", "white", "white"],

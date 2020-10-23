@@ -341,6 +341,9 @@
 
 				// shuffle true colors
 					game.status.trueColors = CORE.sortRandom(game.status.trueColors)
+					while (game.status.trueColors.length > constants.numberOfRounds) {
+						game.status.trueColors.pop()
+					}
 
 				// shuffle deck
 					game.draw = CORE.sortRandom(game.draw)
@@ -420,13 +423,13 @@
 					var thisPlayerId = Object.keys(game.players).find(function(p) {
 						return game.players[p].sessionId == REQUEST.session.id
 					})
-					game.players[thisPlayerId].status.vote = REQUEST.post.selectedPlayerId
+					game.players[thisPlayerId].vote = REQUEST.post.selectedPlayerId
 
 				// tally votes
 					var votes = {}
 					for (var i in game.players) {
-						if (game.players[i].status.vote) {
-							votes[game.players[i].status.vote] = (votes[game.players[i].status.vote] || 0) + 1
+						if (game.players[i].vote) {
+							votes[game.players[i].vote] = (votes[game.players[i].vote] || 0) + 1
 						}
 					}
 
@@ -469,11 +472,11 @@
 
 						// clear votes
 							for (var i in game.players) {
-								game.players[i].status.vote = null
+								game.players[i].vote = null
 							}
 
 						// set turn order
-							game.players[roundLeaderId].status.isTurn = true
+							game.players[roundLeaderId].isTurn = true
 							game.status.roundLeader = roundLeaderId
 							game.status.currentTurn = roundLeaderId
 
@@ -528,7 +531,11 @@
 					}
 
 				// wrong phase
-					if (game.status.phase !== "swap" && game.status.phase !== "toss" && game.status.phase !== "play") {
+					if (game.status.phase == "vote") {
+						selectPlayer(REQUEST, game, callback)
+						return
+					}
+					else if (game.status.phase !== "swap" && game.status.phase !== "toss" && game.status.phase !== "play") {
 						callback({success: false, message: "not the right phase", recipients: [REQUEST.session.id]})
 						return
 					}
@@ -640,8 +647,8 @@
 									var nextPlayerId = getNextPlayerId(game, thisPlayerId)
 									if (nextPlayerId) {
 										// update turn
-											game.players[thisPlayerId].status.isTurn = false
-											game.players[nextPlayerId].status.isTurn = true
+											game.players[thisPlayerId].isTurn = false
+											game.players[nextPlayerId].isTurn = true
 											game.status.currentTurn = nextPlayerId
 											game.updated = new Date().getTime()
 
@@ -661,18 +668,21 @@
 
 												// update players
 													forceDelay(function() {
-														// update this player
-															callback({success: true, message: "wait for all players...", game: sanitizeGame(game, thisPlayerId), recipients: [game.players[thisPlayerId].sessionId]})
+														// all players
+															for (var i in game.players) {
+																var message = (i == thisPlayerId) ? "wait for all players..." : (i == nextPlayerId) ? "your turn! select one of your cards" : null
+																callback({success: true, message: message, game: sanitizeGame(game, i), recipients: [game.players[i].sessionId]})
+															}
 
-														// update next player
-															callback({success: true, message: "your turn! select one of your cards", game: sanitizeGame(game, nextPlayerId), recipients: [game.players[nextPlayerId].sessionId]})
+														// spectators
+															callback({success: true, message: null, game: sanitizeGame(game, null), recipients: Object.keys(game.spectators)})
 													}, CORE.getAsset("constants").delayTime)
 											})
 										return
 									}
 
 								// no next player --> toss phase
-									game.players[thisPlayerId].status.isTurn = false
+									game.players[thisPlayerId].isTurn = false
 									game.status.roundLeader = null
 									game.status.currentTurn = null
 
@@ -1077,7 +1087,7 @@
 				// all players voted?
 					var contenders = {}
 					for (var i in game.players) {
-						if (!game.players[i].status.vote) {
+						if (!game.players[i].vote) {
 							return null
 						}
 						else {
@@ -1087,7 +1097,7 @@
 
 				// count votes
 					for (var i in game.players) {
-						contenders[game.players[i].status.vote]++
+						contenders[game.players[i].vote]++
 					}
 
 				// find victor
@@ -1230,6 +1240,9 @@
 						if (!game.status.endTime) {
 							if (!playerId || (game.players[playerId].team !== "evil" && playerId !== i)) {
 								game.players[i].team = null
+							}
+							if (!playerId || playerId !== i) {
+								game.players[i].vote = null
 							}
 						}
 					}

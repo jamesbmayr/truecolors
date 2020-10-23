@@ -16,7 +16,7 @@ True Colors is a multiplayer asymmetrical team card game by James Mayr
 ### Start
 All players have a secret role. Most players are Good, but they won't know who is Evil. (See team distribution below.)
 At the beginning of each round, a color is revealed in the center. These colors will appear (in a random and unknown order): <b>red, yellow, green, blue, white</b>.
-The game has <b>5</b> rounds. Each round is divided into phases.
+The game has <b>4</b> rounds. Each round is divided into phases.
 
 ### Phases
 <ol>
@@ -46,8 +46,8 @@ The game has <b>5</b> rounds. Each round is divided into phases.
 ### Game End
 The game ends after Good or Evil score enough points to win:
 <ul>
-	<li>Good points: <b>5</b></li>
-	<li>Evil points: <b>1</b></li>
+	<li>Good points: <b>all rounds</b></li>
+	<li>Evil points: <b>one round</b></li>
 </ul>
 
 

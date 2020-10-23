@@ -33,22 +33,27 @@
 					<ol>
 						<li class="rules-phase">
 							<span class="rules-heading">Vote</span>
+							<p class="rules-paragraph"><b>[talk &#x2714;]</b></p>
 							<p class="rules-paragraph">During this phase, players can see only their own cards. All players select 1 person to start the round. Once a majority agrees on a leader, that player begins the next phase, and turn order continues clockwise.</p>
 						</li>
 						<li class="rules-phase">
 							<span class="rules-heading">Swap</span>
+							<p class="rules-paragraph"><b>[no talk &#x2716;]</b></p>
 							<p class="rules-paragraph">On your turn, look at all cards of all players. Select 1 of your own cards and swap it with 1 card of another player. You will only see cards when it is your turn.</p>
 						</li>
 						<li class="rules-phase">
 							<span class="rules-heading">Toss</span>
+							<p class="rules-paragraph"><b>[no talk &#x2716;]</b></p>
 							<p class="rules-paragraph">All players look at their own hands and choose 1 card to discard. Other players will not see your selection.</p>
 						</li>
 						<li class="rules-phase">
 							<span class="rules-heading">Play</span>
+							<p class="rules-paragraph"><b>[no talk &#x2716;]</b></p>
 							<p class="rules-paragraph">All players look at their own cards and choose 1 card to play. After everyone has selected, these cards will be revealed.</p>
 						</li>
 						<li class="rules-phase">
 							<span class="rules-heading">Show</span>
+							<p class="rules-paragraph"><b>[no talk &#x2716;]</b></p>
 							<p class="rules-paragraph">If all the played cards match the round color, the Good team earns a point. Note that some cards (<b><script node>getAsset("constants").wildcardColors.join(", ")</script>node></b>) are wild and can qualify for any round color.</p>
 							<p class="rules-paragraph">But if even 1 card does not match, then Evil earns a point!</p>
 						</li>
@@ -80,26 +85,16 @@
 						<div id="game-table-center-discard">discard<div id="game-table-center-discard-count"></div></div>
 					</div>
 					<div id="game-table-center-tracker">
-						<div id="game-table-center-tracker-round-1" class="game-table-center-tracker-round">
-							<div class="game-table-center-tracker-round-card"></div>
-							<div class="game-table-center-tracker-round-token"></div>
-						</div>
-						<div id="game-table-center-tracker-round-2" class="game-table-center-tracker-round">
-							<div class="game-table-center-tracker-round-card"></div>
-							<div class="game-table-center-tracker-round-token"></div>
-						</div>
-						<div id="game-table-center-tracker-round-3" class="game-table-center-tracker-round">
-							<div class="game-table-center-tracker-round-card"></div>
-							<div class="game-table-center-tracker-round-token"></div>
-						</div>
-						<div id="game-table-center-tracker-round-4" class="game-table-center-tracker-round">
-							<div class="game-table-center-tracker-round-card"></div>
-							<div class="game-table-center-tracker-round-token"></div>
-						</div>
-						<div id="game-table-center-tracker-round-5" class="game-table-center-tracker-round">
-							<div class="game-table-center-tracker-round-card"></div>
-							<div class="game-table-center-tracker-round-token"></div>
-						</div>
+						<script node>var roundCount = getAsset("constants").numberOfRounds
+							var htmlString = ""
+							for (var i = 0; i < roundCount; i++) {
+								htmlString += '<div id="game-table-center-tracker-round-' + (i + 1) + '" class="game-table-center-tracker-round">' + 
+									'<div class="game-table-center-tracker-round-card"></div>' +
+									'<div class="game-table-center-tracker-round-token"></div>' +
+								'</div>'
+							}
+							htmlString
+						</script>node>
 					</div>
 					<div id="game-table-center-message-outer">
 						<div id="game-table-center-message-inner"></div>

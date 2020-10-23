@@ -256,11 +256,12 @@
 			height: calc(3 * (var(--card-size) + 2 * var(--small-gap-size)));
 			width: calc(3 * (var(--card-size) + 2 * var(--small-gap-size)));
 			overflow: hidden;
+			text-align: center;
 		}
 
 		/* piles */
 			#game-table-center-piles {
-				float: left;
+				display: block;
 				width: 100%;
 				height: calc(100% / 3);
 				text-align: center;
@@ -287,17 +288,18 @@
 
 		/* tracker */
 			#game-table-center-tracker {
-				float: left;
-				width: 100%;
+				display: inline-block;
+				width: auto;
 				height: calc(100% / 3);
 				text-align: center;
+				margin: auto auto;
 			}
 
 				.game-table-center-tracker-round {
 					float: left;
 					text-align: center;
 					height: 100%;
-					width: calc(100% / 5); /* ??? NUMBER OF ROUNDS ??? */
+					width: auto;
 				}
 
 				.game-table-center-tracker-round-card {
@@ -393,7 +395,7 @@
 				padding: var(--border-size);
 			}
 
-			.player[selectedForVote=true] {
+			.player[selectedForVote=true], .player[isTurn=true] {
 				border-color: var(--dark-gray);
 				box-shadow: 0 0 0 var(--blur-size) var(--dark-gray) !important;
 			}

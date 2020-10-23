@@ -71,36 +71,21 @@ window.addEventListener("load", function() {
 						message: document.querySelector("#game-table-center-message-inner"),
 						tracker: {
 							element: document.querySelector("#game-table-center-tracker"),
-							round1: {
-								element: document.querySelector("#game-table-center-tracker-round-1"),
-								card: document.querySelector("#game-table-center-tracker-round-1 .game-table-center-tracker-round-card"),
-								token: document.querySelector("#game-table-center-tracker-round-1 .game-table-center-tracker-round-token")
-							},
-							round2: {
-								element: document.querySelector("#game-table-center-tracker-round-2"),
-								card: document.querySelector("#game-table-center-tracker-round-2 .game-table-center-tracker-round-card"),
-								token: document.querySelector("#game-table-center-tracker-round-2 .game-table-center-tracker-round-token")
-							},
-							round3: {
-								element: document.querySelector("#game-table-center-tracker-round-3"),
-								card: document.querySelector("#game-table-center-tracker-round-3 .game-table-center-tracker-round-card"),
-								token: document.querySelector("#game-table-center-tracker-round-3 .game-table-center-tracker-round-token")
-							},
-							round4: {
-								element: document.querySelector("#game-table-center-tracker-round-4"),
-								card: document.querySelector("#game-table-center-tracker-round-4 .game-table-center-tracker-round-card"),
-								token: document.querySelector("#game-table-center-tracker-round-4 .game-table-center-tracker-round-token")
-							},
-							round5: {
-								element: document.querySelector("#game-table-center-tracker-round-5"),
-								card: document.querySelector("#game-table-center-tracker-round-5 .game-table-center-tracker-round-card"),
-								token: document.querySelector("#game-table-center-tracker-round-5 .game-table-center-tracker-round-token")
-							}
 						}
 					},
 					players: {
 						element: document.querySelector("#game-table-players")
 					}
+				}
+			}
+
+			var roundTrackers = Array.from(ELEMENTS.gameTable.center.tracker.element.querySelectorAll(".game-table-center-tracker-round"))
+			for (var i in roundTrackers) {
+				var n = roundTrackers[i].id.replace("game-table-center-tracker-round-", "")
+				ELEMENTS.gameTable.center.tracker["round" + n] = {
+					element: roundTrackers[i],
+					card: roundTrackers[i].querySelector(".game-table-center-tracker-round-card"),
+					token: roundTrackers[i].querySelector(".game-table-center-tracker-round-token")
 				}
 			}
 
@@ -360,7 +345,7 @@ window.addEventListener("load", function() {
 						}
 
 					// highlight if it is this player's turn (only self will know)
-						if (player.status && player.status.isTurn) {
+						if (player.isTurn) {
 							playerElement.setAttribute("isTurn", true)
 						}
 						else {
@@ -382,8 +367,8 @@ window.addEventListener("load", function() {
 								ELEMENTS.gameTable.players[i].removeAttribute("selectedForVote")
 							}
 
-							if (player.status && player.status.vote) {
-								var votedForPlayer = ELEMENTS.gameTable.players[player.status.vote]
+							if (player.vote) {
+								var votedForPlayer = ELEMENTS.gameTable.players[player.vote]
 								votedForPlayer.setAttribute("selectedForVote", true)
 							}
 						}
@@ -428,7 +413,8 @@ window.addEventListener("load", function() {
 					// sendPost
 						SOCKET.send(JSON.stringify({
 							action: "selectCard",
-							selectedCardId: event.target.value
+							selectedCardId: event.target.value,
+							selectedPlayerId: event.target.closest(".player").querySelector(".player-name").value
 						}))
 				} catch (error) {console.log(error)}
 			}
