@@ -91,6 +91,18 @@
 								return
 							}
 
+						// already ended
+							if (game.status && game.status.endTime) {
+								callback({success: false, message: "already ended"})
+								return
+							}
+
+						// already started
+							if (game.status && game.status.startTime) {
+								callback({success: false, message: "already started"})
+								return
+							}
+
 						// player count
 							var teamDistribution = CORE.getAsset("constants").teamDistribution
 							var maximumPlayers = Number(Object.keys(teamDistribution).sort(function(a, b) {

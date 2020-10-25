@@ -390,16 +390,11 @@
 								teamDistribution: {
 									"4": {good: 3, evil: 1},
 									"5": {good: 4, evil: 1},
-									"6": {good: 5, evil: 1},
+									"6": {good: 4, evil: 2},
 									"7": {good: 5, evil: 2},
 									"8": {good: 6, evil: 2},
-									"9": {good: 7, evil: 2},
-									"10": {good: 8, evil: 2},
-									"11": {good: 8, evil: 3},
-									"12": {good: 9, evil: 3},
-									"13": {good: 10, evil: 3},
-									"14": {good: 11, evil: 3},
-									"15": {good: 12, evil: 3},
+									"9": {good: 6, evil: 3},
+									"10": {good: 7, evil: 3}
 								}
 							}
 						break
